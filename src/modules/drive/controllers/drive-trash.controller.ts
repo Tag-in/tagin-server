@@ -5,11 +5,12 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  UseGuards,
+  // UseGuards, // TEMP(test), #18
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CurrentUserId } from '../../../common/decorators/current-user-id.decorator.js';
-import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard.js';
+// TEMP(test): 테스트용 인증 가드 비활성화 (Tag-in/tagin-server#18). 배포 전 원복
+// import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard.js';
 import {
   ApiAuth,
   ApiErrorResponse,
@@ -37,7 +38,7 @@ export class DriveTrashController {
     HttpStatus.NOT_FOUND,
     '항목이 없거나 본인 소유가 아니거나 이미 휴지통에 있음',
   )
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard) // TEMP(test), #18
   @HttpCode(HttpStatus.OK)
   @Post('delete')
   delete(
@@ -61,7 +62,7 @@ export class DriveTrashController {
     HttpStatus.CONFLICT,
     '상위 폴더가 휴지통에 있음. 응답 body의 parentFolderIds를 먼저 복원',
   )
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard) // TEMP(test), #18
   @HttpCode(HttpStatus.OK)
   @Post('restore')
   restore(
@@ -73,7 +74,7 @@ export class DriveTrashController {
 
   /** 휴지통 목록 (직접 삭제한 항목만, 최근 삭제 순) */
   @ApiAuth()
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard) // TEMP(test), #18
   @Get('trash')
   list(@CurrentUserId() userId: string): Promise<TrashListResponseDto> {
     return this.trash.list(userId);
