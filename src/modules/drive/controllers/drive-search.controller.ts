@@ -1,8 +1,10 @@
-import { Controller, Get, HttpStatus, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query } from '@nestjs/common';
+// UseGuards (TEMP(test), #18)
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { CurrentUserId } from '../../../common/decorators/current-user-id.decorator.js';
-import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard.js';
+// TEMP(test): 테스트용 인증 가드 비활성화 (Tag-in/tagin-server#18). 배포 전 원복
+// import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard.js';
 import {
   ApiAuth,
   ApiErrorResponse,
@@ -23,7 +25,7 @@ export class DriveSearchController {
   @ApiErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, '임베딩 API 호출 실패')
   // 요청마다 유료 임베딩 API를 호출하므로 전역 한도보다 낮게 둔다.
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard) // TEMP(test), #18
   @Get('search')
   searchItems(
     @CurrentUserId() userId: string,

@@ -4,11 +4,12 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  UseGuards,
+  // UseGuards, // TEMP(test), #18
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CurrentUserId } from '../../../common/decorators/current-user-id.decorator.js';
-import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard.js';
+// TEMP(test): 테스트용 인증 가드 비활성화 (Tag-in/tagin-server#18). 배포 전 원복
+// import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard.js';
 import {
   ApiAuth,
   ApiErrorResponse,
@@ -36,7 +37,7 @@ export class DriveMoveController {
     HttpStatus.CONFLICT,
     '대상 폴더에 같은 이름이 있음 (onConflict=FAIL). 응답 body의 conflicts에 충돌 항목 포함',
   )
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard) // TEMP(test), #18
   @HttpCode(HttpStatus.OK)
   @Post('move')
   moveEntries(
