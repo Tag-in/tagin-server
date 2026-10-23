@@ -1,13 +1,13 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { ApiErrorResponse } from '../common/swagger/swagger.decorators.js';
-import { AuthService } from './auth.service.js';
-import { GoogleLoginDto } from './dto/google-login.dto.js';
-import { GoogleLoginResponseDto } from './dto/google-login-response.dto.js';
-import { GoogleSignupDto } from './dto/google-signup.dto.js';
-import { RefreshTokenDto } from './dto/refresh-token.dto.js';
-import { TokenResponseDto } from './dto/token-response.dto.js';
+import { ApiErrorResponse } from '../../../common/swagger/swagger.decorators.js';
+import { GoogleLoginDto } from '../dto/google-login.dto.js';
+import { GoogleLoginResponseDto } from '../dto/google-login-response.dto.js';
+import { GoogleSignupDto } from '../dto/google-signup.dto.js';
+import { RefreshTokenDto } from '../dto/refresh-token.dto.js';
+import { TokenResponseDto } from '../dto/token-response.dto.js';
+import { AuthService } from '../services/auth.service.js';
 
 @ApiTags('Auth')
 @Throttle({ default: { limit: 10, ttl: 60_000 } })

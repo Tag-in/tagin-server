@@ -2,7 +2,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Redis } from 'ioredis';
-import { REDIS_CLIENT } from '../redis/redis.constants.js';
+import { REDIS_CLIENT } from '../../../core/redis/redis.constants.js';
 
 interface RefreshSession {
   userId: string;

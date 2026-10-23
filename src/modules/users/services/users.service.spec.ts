@@ -1,7 +1,10 @@
 import { ConflictException } from '@nestjs/common';
 import type { Repository } from 'typeorm';
-import { AuthProvider, UserIdentity } from './user-identity.entity.js';
-import { User } from './user.entity.js';
+import {
+  AuthProvider,
+  UserIdentity,
+} from '../entities/user-identity.entity.js';
+import { User } from '../entities/user.entity.js';
 import { UsersService } from './users.service.js';
 
 describe('UsersService', () => {

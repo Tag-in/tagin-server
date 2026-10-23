@@ -1,21 +1,16 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AuthProvider, UserIdentity } from './user-identity.entity.js';
-import { User } from './user.entity.js';
-
-export interface SocialProfile {
-  providerUserId: string;
-  email: string;
-  nickname: string;
-  profileImageUrl: string | null;
-}
-
-export interface SignupConsents {
-  marketingAgreed: boolean;
-}
-
-const PG_UNIQUE_VIOLATION = '23505';
+import { isUniqueViolation } from '../../../core/database/utils/pg-error.util.js';
+import {
+  AuthProvider,
+  UserIdentity,
+} from '../entities/user-identity.entity.js';
+import { User } from '../entities/user.entity.js';
+import type {
+  SignupConsents,
+  SocialProfile,
+} from '../types/social-profile.interface.js';
 
 @Injectable()
 export class UsersService {
@@ -79,9 +74,7 @@ export class UsersService {
         return user;
       });
     } catch (error) {
-      const code = (error as { driverError?: { code?: string } }).driverError
-        ?.code;
-      if (code === PG_UNIQUE_VIOLATION) {
+      if (isUniqueViolation(error)) {
         throw new ConflictException('이미 가입된 계정입니다.');
       }
       throw error;

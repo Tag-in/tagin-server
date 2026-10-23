@@ -6,7 +6,7 @@ import {
   TypeOrmHealthIndicator,
 } from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
-import { RedisHealthIndicator } from './redis.health.js';
+import { RedisHealthIndicator } from './indicators/redis.health.js';
 
 @ApiTags('Health')
 @SkipThrottle()
