@@ -1,5 +1,8 @@
 import { MoveConflictPolicy } from '../../dto/move-drive.dto.js';
-import { MoveEntryType, MoveStatus } from '../../dto/move-drive-response.dto.js';
+import {
+  MoveEntryType,
+  MoveStatus,
+} from '../../dto/move-drive-response.dto.js';
 import { planMoves } from '../move-plan.util.js';
 
 const entry = (id: string, name: string, inTarget = false) => ({
