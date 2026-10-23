@@ -1,4 +1,8 @@
-import { buildZipPlan, type ZipFile, type ZipFolder } from './zip-plan.util.js';
+import {
+  buildZipPlan,
+  type ZipFile,
+  type ZipFolder,
+} from '../zip-plan.util.js';
 
 const folder = (id: string, name: string, parentId: string | null = null) =>
   ({ id, name, parentId }) satisfies ZipFolder;

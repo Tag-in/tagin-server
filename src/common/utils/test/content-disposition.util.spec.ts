@@ -1,4 +1,4 @@
-import { attachmentDisposition } from './content-disposition.util.js';
+import { attachmentDisposition } from '../content-disposition.util.js';
 
 describe('attachmentDisposition', () => {
   it('ASCII 파일명은 그대로 쓴다', () => {

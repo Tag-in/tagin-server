@@ -2,7 +2,7 @@
 import 'reflect-metadata';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { SearchDriveItemsDto } from './search-drive-items.dto.js';
+import { SearchDriveItemsDto } from '../search-drive-items.dto.js';
 
 const errorsOf = async (query: Record<string, string>) => {
   const dto = plainToInstance(SearchDriveItemsDto, query);

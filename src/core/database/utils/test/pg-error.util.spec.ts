@@ -1,4 +1,4 @@
-import { isUniqueViolation } from './pg-error.util.js';
+import { isUniqueViolation } from '../pg-error.util.js';
 
 describe('isUniqueViolation', () => {
   it('PostgreSQL unique 제약 위반(23505)이면 true', () => {

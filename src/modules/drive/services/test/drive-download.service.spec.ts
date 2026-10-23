@@ -7,9 +7,9 @@ import type { ConfigService } from '@nestjs/config';
 import JSZip from 'jszip';
 import { Readable } from 'node:stream';
 import type { DataSource } from 'typeorm';
-import type { ObjectStorageService } from '../../../core/storage/object-storage.service.js';
-import { DriveItemKind } from '../dto/drive-search-response.dto.js';
-import { DriveDownloadService } from './drive-download.service.js';
+import type { ObjectStorageService } from '../../../../core/storage/object-storage.service.js';
+import { DriveItemKind } from '../../dto/drive-search-response.dto.js';
+import { DriveDownloadService } from '../drive-download.service.js';
 
 const USER = 'user-1';
 

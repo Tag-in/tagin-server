@@ -1,6 +1,6 @@
 import { HealthIndicatorService } from '@nestjs/terminus';
 import type { Redis } from 'ioredis';
-import { RedisHealthIndicator } from './redis.health.js';
+import { RedisHealthIndicator } from '../redis.health.js';
 
 describe('RedisHealthIndicator', () => {
   const redis = { ping: vi.fn() };

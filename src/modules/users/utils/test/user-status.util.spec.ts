@@ -1,5 +1,5 @@
-import { UserStatus, type User } from '../entities/user.entity.js';
-import { isUsableUser } from './user-status.util.js';
+import { UserStatus, type User } from '../../entities/user.entity.js';
+import { isUsableUser } from '../user-status.util.js';
 
 describe('isUsableUser', () => {
   const userOf = (status: UserStatus, deletedAt: Date | null = null) =>

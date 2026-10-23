@@ -1,6 +1,6 @@
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
-import { GoogleTokenVerifier } from './google-token-verifier.js';
+import { GoogleTokenVerifier } from '../google-token-verifier.js';
 
 const verifyIdToken = vi.hoisted(() => vi.fn());
 

@@ -1,7 +1,7 @@
 import type { ConfigService } from '@nestjs/config';
 import type { DataSource } from 'typeorm';
-import type { ObjectStorageService } from '../../../core/storage/object-storage.service.js';
-import { TrashPurgeService } from './trash-purge.service.js';
+import type { ObjectStorageService } from '../../../../core/storage/object-storage.service.js';
+import { TrashPurgeService } from '../trash-purge.service.js';
 
 const NOW = new Date('2026-10-31T00:00:00.000Z');
 const CUTOFF = new Date('2026-10-01T00:00:00.000Z');

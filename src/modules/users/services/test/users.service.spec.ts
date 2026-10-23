@@ -3,9 +3,9 @@ import type { Repository } from 'typeorm';
 import {
   AuthProvider,
   UserIdentity,
-} from '../entities/user-identity.entity.js';
-import { User } from '../entities/user.entity.js';
-import { UsersService } from './users.service.js';
+} from '../../entities/user-identity.entity.js';
+import { User } from '../../entities/user.entity.js';
+import { UsersService } from '../users.service.js';
 
 describe('UsersService', () => {
   const profile = {
