@@ -46,6 +46,8 @@ export const envValidationSchema = Joi.object({
     .default('https://openrouter.ai/api/v1'),
   EMBEDDING_MODEL: Joi.string().default('openai/text-embedding-3-small'),
   EMBEDDING_DIMENSIONS: Joi.number().integer().positive().default(1536),
+  // TEMP(test): 기동 시 test/fixtures/dummy-files를 테스트 사용자 드라이브에 업로드 (production에서는 무시). 배포 전 제거.
+  SEED_DUMMY_DRIVE: Joi.boolean().default(true),
   DRIVE_SIMILARITY_THRESHOLD: Joi.number().min(0).max(1).default(0.55),
   // 휴지통 보관 일수. 이 기간이 지나면 매일 새벽 자동 영구 삭제된다.
   // ZIP 다운로드 한도 (서버가 직접 스트리밍하므로 제한한다)
