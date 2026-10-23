@@ -13,13 +13,16 @@ TAG→IN 서버 (NestJS)
 ```bash
 npm install
 cp .env.example .env      # 필요 시 값 수정
-npm run db:up             # PostgreSQL, Redis 실행 (healthy 상태까지 대기)
+npm run db:up             # PostgreSQL, Redis, MinIO 실행 (healthy 상태까지 대기)
 npm run start:dev
 ```
 
 - API: `http://localhost:3000/api`
 - 헬스체크: `GET /api/health` (DB, Redis 연결 확인)
 - Swagger UI: `http://localhost:3000/docs` / OpenAPI JSON: `http://localhost:3000/docs/json` (`SWAGGER_ENABLED=true`일 때만 노출)
+
+- MinIO(로컬 S3 호환 스토리지): API `http://localhost:9000`, 콘솔 `http://localhost:9001` (로그인은 `.env`의 `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`). 기동 시 `AWS_S3_BUCKET_NAME` 버킷을 자동으로 만든다. 드라이브 파일 업로드와 기동 시 더미 파일 업로드(`SEED_DUMMY_DRIVE`)가 사용하므로, 떠 있지 않으면 업로드가 `ECONNREFUSED`로 실패한다.
+- MinIO 공식 이미지는 더 이상 배포되지 않아 `docker-compose.yml`은 Bitnami 보관용 이미지(`bitnamilegacy/minio`)를 고정해 쓴다. 업데이트되지 않는 로컬 개발 전용이므로 운영에서는 AWS S3를 사용한다.
 
 인프라 종료는 `npm run db:down`, 데이터까지 삭제하려면 `docker compose down -v`.
 
