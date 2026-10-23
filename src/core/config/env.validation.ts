@@ -25,7 +25,7 @@ export const envValidationSchema = Joi.object({
   JWT_ACCESS_EXPIRES_IN: Joi.number().integer().positive().default(900),
   JWT_REFRESH_EXPIRES_IN: Joi.number().integer().positive().default(1_209_600),
 
-  // TEMP(test): 인증 가드를 끈 동안 모든 요청에 사용할 사용자 id (Tag-in/tagin-server#18). 배포 전 제거.
+  // TEMP(test): Authorization 헤더 없는 요청에 사용할 사용자 id, production 제외 (Tag-in/tagin-server#18). 배포 전 제거.
   TEST_USER_ID: Joi.string().uuid().allow('').default(''),
 
   GOOGLE_WEB_CLIENT_ID: Joi.string().required(),

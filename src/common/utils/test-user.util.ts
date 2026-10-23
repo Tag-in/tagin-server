@@ -1,5 +1,5 @@
 /**
- * TEMP(test): 인증 가드를 끈 동안 모든 요청이 사용할 사용자 id (Tag-in/tagin-server#18).
+ * TEMP(test): 토큰 없는 요청이 사용할 사용자 id (production 제외) (Tag-in/tagin-server#18).
  * TEST_USER_ID를 따로 지정하지 않아도 동작하도록 고정 UUID를 기본값으로 쓴다. 배포 전 제거.
  */
 export const DEFAULT_TEST_USER_ID = '00000000-0000-4000-8000-000000000001';
