@@ -5,8 +5,8 @@ import {
 } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import type { DataSource } from 'typeorm';
-import { MoveEntryType } from '../dto/move-drive-response.dto.js';
-import { DriveTrashService } from './drive-trash.service.js';
+import { MoveEntryType } from '../../dto/move-drive-response.dto.js';
+import { DriveTrashService } from '../drive-trash.service.js';
 
 const USER = 'user-1';
 const NOW = new Date('2026-10-01T00:00:00.000Z');

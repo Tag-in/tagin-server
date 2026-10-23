@@ -1,6 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { GoogleSignupDto } from './google-signup.dto.js';
+import { GoogleSignupDto } from '../google-signup.dto.js';
 
 describe('GoogleSignupDto', () => {
   const valid = { idToken: 'id-token', termsAgreed: true, privacyAgreed: true };

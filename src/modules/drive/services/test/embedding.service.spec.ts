@@ -1,5 +1,5 @@
 import type { ConfigService } from '@nestjs/config';
-import { EmbeddingService } from './embedding.service.js';
+import { EmbeddingService } from '../embedding.service.js';
 
 describe('EmbeddingService', () => {
   const env: Record<string, unknown> = {

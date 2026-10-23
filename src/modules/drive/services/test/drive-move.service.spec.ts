@@ -4,9 +4,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { DataSource } from 'typeorm';
-import { MoveConflictPolicy } from '../dto/move-drive.dto.js';
-import { MoveStatus } from '../dto/move-drive-response.dto.js';
-import { DriveMoveService } from './drive-move.service.js';
+import { MoveConflictPolicy } from '../../dto/move-drive.dto.js';
+import { MoveStatus } from '../../dto/move-drive-response.dto.js';
+import { DriveMoveService } from '../drive-move.service.js';
 
 const USER = 'user-1';
 const TARGET = 'target-1';

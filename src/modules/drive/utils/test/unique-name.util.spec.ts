@@ -1,4 +1,4 @@
-import { resolveUniqueName } from './unique-name.util.js';
+import { resolveUniqueName } from '../unique-name.util.js';
 
 describe('resolveUniqueName', () => {
   const file = { keepExtension: true };

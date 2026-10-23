@@ -1,7 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import type { Redis } from 'ioredis';
-import { RefreshTokenService } from './refresh-token.service.js';
+import { RefreshTokenService } from '../refresh-token.service.js';
 
 // 필요한 명령만 구현한 인메모리 Redis (TTL은 검증 대상이 아님)
 function createFakeRedis() {

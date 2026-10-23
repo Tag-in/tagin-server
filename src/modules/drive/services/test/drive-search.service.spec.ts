@@ -1,8 +1,8 @@
 import { NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import type { DataSource } from 'typeorm';
-import { DriveItemKind } from '../dto/drive-search-response.dto.js';
-import { DriveSearchService } from './drive-search.service.js';
-import type { EmbeddingService } from './embedding.service.js';
+import { DriveItemKind } from '../../dto/drive-search-response.dto.js';
+import { DriveSearchService } from '../drive-search.service.js';
+import type { EmbeddingService } from '../embedding.service.js';
 
 describe('DriveSearchService', () => {
   const dataSource = { query: vi.fn() };
