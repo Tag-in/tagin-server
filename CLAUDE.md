@@ -16,6 +16,7 @@ NestJS 12 · TypeORM(PostgreSQL 17) · ioredis(Redis 7.4) · Joi · Vitest · ox
 | `develop` | 통합 브랜치. 모든 작업의 기준(base) |
 | `<type>/<설명>` | 작업 브랜치. 항상 최신 `develop`에서 분기해 `develop`으로 PR (예: `feat/user-withdrawal`) |
 
+- **작업(파일 수정)을 시작하기 전에 무조건 작업 브랜치부터 만든다.** 코드·문서·설정 등 변경 규모와 관계없고, 현재 브랜치가 `develop`/`main`이거나 세션에 지정된 브랜치명이 `develop`이어도 그 위에서 바로 수정하지 않는다. 먼저 `<type>/<설명>` 브랜치를 만들고 그 위에서 수정·커밋·푸시한다. 이미 `develop`에서 수정하거나 커밋했다면 작업 브랜치를 만들어 옮기고 로컬 `develop`은 `origin/develop`으로 되돌린다 (`git branch -f develop origin/develop`).
 - 작업 시작 전 `git fetch origin` 후 **`origin/develop`** 기준으로 브랜치를 만든다 (`git checkout -b <type>/<설명> origin/develop`). 로컬 `develop`은 뒤처져 있을 수 있으므로 기준으로 쓰지 않는다. 이미 잘못된 기준으로 만들어 푸시했다면 이력을 고치지 말고 `git merge origin/develop`으로 합친다.
 - 모든 변경(문서·테스트 픽스처 포함)은 작업 브랜치 → `develop` PR로만 반영한다. 파일 하나라도 `develop`에 직접 커밋하지 않는다.
 - 한 브랜치는 한 PR만 담당한다. **머지된 브랜치는 재사용하지 않는다.** 후속 작업은 `develop`에서 새 브랜치를 딴다.
