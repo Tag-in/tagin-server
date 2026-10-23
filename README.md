@@ -54,6 +54,7 @@ src/
 │   └── swagger/               # Swagger 설정, 문서화 공통 데코레이터/DTO
 └── modules/                   # 비즈니스 도메인
     ├── auth/                  # Google 로그인·가입(ID Token), Access JWT + Refresh Token(Redis)
+    ├── drive/                 # 파일·링크·폴더(계층). 임베딩 기반 의미 검색·자동 분류(pgvector), 이동
     └── users/                 # User·UserIdentity 엔티티, 사용자 계정 규칙
 ```
 
