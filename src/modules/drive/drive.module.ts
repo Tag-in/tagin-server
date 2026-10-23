@@ -5,12 +5,14 @@ import { DriveDownloadController } from './controllers/drive-download.controller
 import { DriveMoveController } from './controllers/drive-move.controller.js';
 import { DriveSearchController } from './controllers/drive-search.controller.js';
 import { DriveTrashController } from './controllers/drive-trash.controller.js';
+import { DriveUploadController } from './controllers/drive-upload.controller.js';
 import { DriveBrowseService } from './services/drive-browse.service.js';
 import { DriveDownloadService } from './services/drive-download.service.js';
 import { DriveDummySeeder } from './services/drive-dummy-seeder.service.js';
 import { DriveMoveService } from './services/drive-move.service.js';
 import { DriveSearchService } from './services/drive-search.service.js';
 import { DriveTrashService } from './services/drive-trash.service.js';
+import { DriveUploadService } from './services/drive-upload.service.js';
 import { EmbeddingService } from './services/embedding.service.js';
 import { TrashPurgeService } from './services/trash-purge.service.js';
 
@@ -18,6 +20,7 @@ import { TrashPurgeService } from './services/trash-purge.service.js';
   imports: [StorageModule],
   controllers: [
     DriveBrowseController,
+    DriveUploadController,
     DriveSearchController,
     DriveMoveController,
     DriveTrashController,
@@ -25,6 +28,7 @@ import { TrashPurgeService } from './services/trash-purge.service.js';
   ],
   providers: [
     DriveBrowseService,
+    DriveUploadService,
     DriveSearchService,
     DriveMoveService,
     DriveTrashService,
