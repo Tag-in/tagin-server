@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 /** 조회 결과를 요청한 ID 순서로 정렬한다. */
 export const sortByRequest = <T extends { id: string }>(
@@ -17,5 +17,16 @@ export const assertAllFound = (
   const missing = requestedIds.filter((id) => !foundIds.has(id));
   if (missing.length > 0) {
     throw new NotFoundException(`찾을 수 없는 ${label}: ${missing.join(', ')}`);
+  }
+};
+
+/** 파일도 폴더도 지정하지 않았으면 400 */
+export const assertSelectionNotEmpty = (
+  itemIds: string[],
+  folderIds: string[],
+  verb: string,
+): void => {
+  if (itemIds.length === 0 && folderIds.length === 0) {
+    throw new BadRequestException(`${verb} 파일 또는 폴더를 지정해야 합니다.`);
   }
 };

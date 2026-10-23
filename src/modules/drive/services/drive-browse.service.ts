@@ -8,11 +8,12 @@ import type {
 } from '../dto/drive-browse-response.dto.js';
 import type { DriveItemKind } from '../dto/drive-search-response.dto.js';
 
-interface FolderRow {
+export interface FolderRow {
   id: string;
   name: string;
   parent_id: string | null;
   item_count: number;
+  starred_at: Date | null;
   created_at: Date;
   updated_at: Date;
 }
@@ -26,13 +27,21 @@ export interface ItemRow {
   size_bytes: string | number | null;
   url: string | null;
   summary: string | null;
+  starred_at: Date | null;
   created_at: Date;
 }
 
-const FOLDER_COLUMNS =
-  'id, name, parent_id, item_count, created_at, updated_at';
+export const FOLDER_COLUMNS =
+  'id, name, parent_id, item_count, starred_at, created_at, updated_at';
 export const ITEM_COLUMNS =
-  'id, folder_id, kind, name, mime_type, size_bytes, url, summary, created_at';
+  'id, folder_id, kind, name, mime_type, size_bytes, url, summary, starred_at, created_at';
+
+/** JOIN이 있는 쿼리에서 쓰도록 컬럼마다 테이블 별칭을 붙인다. */
+export const qualify = (columns: string, alias: string): string =>
+  columns
+    .split(', ')
+    .map((column) => `${alias}.${column}`)
+    .join(', ');
 
 /** 내 드라이브의 폴더 트리와 폴더 내용을 조회한다 (휴지통 항목 제외). */
 @Injectable()
@@ -59,7 +68,7 @@ export class DriveBrowseService {
          SELECT ${FOLDER_COLUMNS}, 0 AS depth FROM drive_folders
           WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL
          UNION ALL
-         SELECT f.id, f.name, f.parent_id, f.item_count, f.created_at, f.updated_at, u.depth + 1
+         SELECT ${qualify(FOLDER_COLUMNS, 'f')}, u.depth + 1
            FROM drive_folders f JOIN up u ON f.id = u.parent_id
        )
        SELECT * FROM up ORDER BY depth DESC`,
@@ -93,12 +102,13 @@ export class DriveBrowseService {
   }
 }
 
-function toFolder(row: FolderRow): DriveFolderDto {
+export function toFolder(row: FolderRow): DriveFolderDto {
   return {
     id: row.id,
     name: row.name,
     parentId: row.parent_id,
     itemCount: Number(row.item_count),
+    starredAt: row.starred_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -115,6 +125,7 @@ export function toItem(row: ItemRow): DriveItemDto {
     sizeBytes: row.size_bytes === null ? null : Number(row.size_bytes),
     url: row.url,
     summary: row.summary,
+    starredAt: row.starred_at ?? null,
     createdAt: row.created_at,
   };
 }

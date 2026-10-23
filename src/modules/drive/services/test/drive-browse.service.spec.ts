@@ -13,6 +13,7 @@ describe('DriveBrowseService', () => {
     name,
     parent_id: parentId,
     item_count: 2,
+    starred_at: null,
     created_at: at,
     updated_at: at,
   });
@@ -36,6 +37,7 @@ describe('DriveBrowseService', () => {
         name: '매출',
         parentId: null,
         itemCount: 2,
+        starredAt: null,
         createdAt: at,
         updatedAt: at,
       },
@@ -44,6 +46,7 @@ describe('DriveBrowseService', () => {
         name: '분기',
         parentId: 'f1',
         itemCount: 2,
+        starredAt: null,
         createdAt: at,
         updatedAt: at,
       },
@@ -67,6 +70,7 @@ describe('DriveBrowseService', () => {
           size_bytes: '2048',
           url: null,
           summary: '분기 매출',
+          starred_at: at,
           created_at: at,
         },
       ]);
@@ -92,6 +96,7 @@ describe('DriveBrowseService', () => {
         sizeBytes: 2048,
         url: null,
         summary: '분기 매출',
+        starredAt: at,
         createdAt: at,
       },
     ]);

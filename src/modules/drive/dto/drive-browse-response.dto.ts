@@ -13,6 +13,9 @@ export class DriveFolderDto {
   /** 폴더 직속 파일·링크 수 (하위 폴더 안의 항목은 제외) */
   itemCount: number;
 
+  /** 중요 표시한 시각. 표시하지 않았으면 null */
+  starredAt: Date | null;
+
   createdAt: Date;
 
   updatedAt: Date;
@@ -46,7 +49,15 @@ export class DriveItemDto {
   /** 임베딩에 사용한 본문 일부 */
   summary: string | null;
 
+  /** 중요 표시한 시각. 표시하지 않았으면 null */
+  starredAt: Date | null;
+
   createdAt: Date;
+}
+
+export class DriveItemWithFolderDto extends DriveItemDto {
+  /** 항목이 들어 있는 폴더 이름 */
+  folderName: string;
 }
 
 export class DriveFolderPathEntryDto {
