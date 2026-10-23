@@ -12,6 +12,11 @@ import {
   MoveEntryType,
   MoveStatus,
 } from '../dto/move-drive-response.dto.js';
+import {
+  addItemsToFolders,
+  removeItemsFromFolders,
+} from '../utils/centroid.util.js';
+import { assertAllFound, sortByRequest } from '../utils/selection.util.js';
 import { planMoves, type PlannedMove } from '../utils/move-plan.util.js';
 
 interface ItemRow {
@@ -61,7 +66,7 @@ export class DriveMoveService {
 
       if (targetId) {
         const target = await em.query(
-          'SELECT 1 FROM drive_folders WHERE id = $1 AND owner_id = $2',
+          'SELECT 1 FROM drive_folders WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL',
           [targetId, userId],
         );
         if (target.length === 0) {
@@ -74,7 +79,7 @@ export class DriveMoveService {
           ? []
           : await em.query<ItemRow[]>(
               `SELECT id, name, folder_id FROM drive_items
-                WHERE id = ANY($1::uuid[]) AND owner_id = $2 FOR UPDATE`,
+                WHERE id = ANY($1::uuid[]) AND owner_id = $2 AND deleted_at IS NULL FOR UPDATE`,
               [itemIds, userId],
             ),
         itemIds,
@@ -84,7 +89,7 @@ export class DriveMoveService {
           ? []
           : await em.query<FolderRow[]>(
               `SELECT id, name, parent_id FROM drive_folders
-                WHERE id = ANY($1::uuid[]) AND owner_id = $2 FOR UPDATE`,
+                WHERE id = ANY($1::uuid[]) AND owner_id = $2 AND deleted_at IS NULL FOR UPDATE`,
               [folderIds, userId],
             ),
         folderIds,
@@ -155,7 +160,8 @@ export class DriveMoveService {
     if (table === 'drive_items' && targetId === null) return new Set();
     const rows = await em.query<{ name: string }[]>(
       `SELECT name FROM ${table}
-        WHERE owner_id = $1 AND ${parentColumn} IS NOT DISTINCT FROM $2::uuid`,
+        WHERE owner_id = $1 AND deleted_at IS NULL
+          AND ${parentColumn} IS NOT DISTINCT FROM $2::uuid`,
       [userId, targetId],
     );
     return new Set(rows.map((r) => r.name));
@@ -196,27 +202,9 @@ const moveItems = async (
   if (moves.length === 0) return;
   const ids = moves.map((m) => m.id);
 
-  // 두 UPDATE 모두 항목의 현재 folder_id를 읽으므로 항목 이동보다 먼저 실행한다.
-  await em.query(
-    `UPDATE drive_folders f
-        SET centroid = CASE WHEN f.item_count <= m.cnt THEN NULL ELSE f.centroid - m.vsum END,
-            item_count = GREATEST(f.item_count - m.cnt, 0),
-            updated_at = now()
-       FROM (SELECT folder_id, sum(embedding) AS vsum, count(*) AS cnt
-               FROM drive_items WHERE id = ANY($1::uuid[]) GROUP BY folder_id) m
-      WHERE f.id = m.folder_id`,
-    [ids],
-  );
-  await em.query(
-    `UPDATE drive_folders f
-        SET centroid = COALESCE(f.centroid + m.vsum, m.vsum),
-            item_count = f.item_count + m.cnt,
-            updated_at = now()
-       FROM (SELECT sum(embedding) AS vsum, count(*) AS cnt
-               FROM drive_items WHERE id = ANY($1::uuid[])) m
-      WHERE f.id = $2`,
-    [ids, targetId],
-  );
+  // centroid 갱신은 항목 이동보다 먼저 한다 (항목의 현재 folder_id를 읽는다).
+  await removeItemsFromFolders(em, ids);
+  await addItemsToFolders(em, ids, targetId);
   await em.query(
     `UPDATE drive_items i SET folder_id = $1, name = v.name
        FROM unnest($2::uuid[], $3::text[]) AS v(id, name)
@@ -238,22 +226,4 @@ const moveFolders = async (
       WHERE f.id = v.id AND f.owner_id = $4`,
     [targetId, moves.map((m) => m.id), moves.map((m) => m.name), userId],
   );
-};
-
-const sortByRequest = <T extends { id: string }>(
-  found: T[],
-  requestedIds: string[],
-): T[] =>
-  found.sort((a, b) => requestedIds.indexOf(a.id) - requestedIds.indexOf(b.id));
-
-const assertAllFound = (
-  label: string,
-  requestedIds: string[],
-  found: { id: string }[],
-): void => {
-  const foundIds = new Set(found.map((entry) => entry.id));
-  const missing = requestedIds.filter((id) => !foundIds.has(id));
-  if (missing.length > 0) {
-    throw new NotFoundException(`찾을 수 없는 ${label}: ${missing.join(', ')}`);
-  }
 };

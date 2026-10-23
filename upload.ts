@@ -9,11 +9,11 @@
  * 흐름: 텍스트 추출 → 임베딩 → pgvector 최근접 폴더 검색(코사인 유사도 ≥ 임계값) → 폴더 결정 → 저장
  *
  * 스키마는 src/core/database/migrations(CreateDriveFolders, AddDriveFolderHierarchy)에 있다.
- * Embedder 구현은 src/modules/drive/services/embedding.service.ts(EmbeddingService)를 쓴다.
+ * Embedder 구현은 EmbeddingService(src/modules/drive/services), ObjectStorage 구현은
+ * ObjectStorageService(src/core/storage)를 쓴다.
  */
 import { createHash, randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import JSZip from 'jszip';
 import { PDFParse } from 'pdf-parse';
 
@@ -375,29 +375,6 @@ function normalizeVector(v: number[]): number[] {
   return norm === 0 ? v : v.map((x) => x / norm);
 }
 
-// ───────────────────────── 기본 구현: 스토리지 (S3/MinIO) ─────────────────────────
-
-export class S3ObjectStorage implements ObjectStorage {
-  constructor(
-    private readonly client = new S3Client({
-      region: process.env.AWS_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
-      },
-      endpoint: process.env.AWS_S3_ENDPOINT,
-      forcePathStyle: true, // MinIO 필수
-    }),
-    private readonly bucket = process.env.AWS_S3_BUCKET_NAME ?? '',
-  ) {}
-
-  async put(key: string, body: Buffer, mimeType: string): Promise<void> {
-    await this.client.send(
-      new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: body, ContentType: mimeType }),
-    );
-  }
-}
-
 // ───────────────────────── 기본 구현: DB (TypeORM + pgvector) ─────────────────────────
 
 /** TypeORM DataSource와 호환되는 최소 인터페이스 (테스트에서 대체하기 쉽게 분리). */
@@ -429,7 +406,7 @@ class PgTx implements DriveTx {
   async findNearestFolder(ownerId: string, vector: number[]): Promise<FolderMatch | null> {
     const rows = await this.m.query(
       `SELECT id, name, 1 - (centroid <=> $2::vector) AS similarity
-         FROM drive_folders WHERE owner_id = $1 AND centroid IS NOT NULL
+         FROM drive_folders WHERE owner_id = $1 AND centroid IS NOT NULL AND deleted_at IS NULL
         ORDER BY centroid <=> $2::vector LIMIT 1`,
       [ownerId, toVectorLiteral(vector)],
     );
@@ -473,7 +450,7 @@ class PgTx implements DriveTx {
 
   async folderNameExists(ownerId: string, name: string): Promise<boolean> {
     const rows = await this.m.query(
-      'SELECT 1 FROM drive_folders WHERE owner_id = $1 AND name = $2 LIMIT 1',
+      'SELECT 1 FROM drive_folders WHERE owner_id = $1 AND name = $2 AND deleted_at IS NULL LIMIT 1',
       [ownerId, name],
     );
     return rows.length > 0;

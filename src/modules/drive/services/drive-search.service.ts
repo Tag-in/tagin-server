@@ -64,9 +64,10 @@ export class DriveSearchService {
       // 선택한 폴더와 그 하위 폴더 전체
       scope = `AND i.folder_id IN (
         WITH RECURSIVE subtree AS (
-          SELECT id FROM drive_folders WHERE id = $4
+          SELECT id FROM drive_folders WHERE id = $4 AND deleted_at IS NULL
           UNION ALL
           SELECT f.id FROM drive_folders f JOIN subtree s ON f.parent_id = s.id
+           WHERE f.deleted_at IS NULL
         ) SELECT id FROM subtree)`;
     }
 
@@ -76,7 +77,7 @@ export class DriveSearchService {
               1 - (i.embedding <=> $2::vector) AS similarity
          FROM drive_items i
          JOIN drive_folders f ON f.id = i.folder_id
-        WHERE i.owner_id = $1 ${scope}
+        WHERE i.owner_id = $1 AND i.deleted_at IS NULL ${scope}
         ORDER BY i.embedding <=> $2::vector
         LIMIT $3`,
       params,
@@ -90,7 +91,7 @@ export class DriveSearchService {
     folderId: string,
   ): Promise<void> {
     const rows: unknown[] = await this.dataSource.query(
-      'SELECT 1 FROM drive_folders WHERE id = $1 AND owner_id = $2',
+      'SELECT 1 FROM drive_folders WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL',
       [folderId, ownerId],
     );
     // 다른 사용자의 폴더도 존재 여부를 드러내지 않도록 404로 통일한다.
