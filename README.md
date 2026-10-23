@@ -54,6 +54,7 @@ src/
 │   └── swagger/               # Swagger 설정, 문서화 공통 데코레이터/DTO
 └── modules/                   # 비즈니스 도메인
     ├── auth/                  # Google 로그인·가입(ID Token), Access JWT + Refresh Token(Redis)
+    ├── files/                 # 업로드 파일 메타데이터 (바이너리는 오브젝트 스토리지)
     └── users/                 # User·UserIdentity 엔티티, 사용자 계정 규칙
 ```
 
