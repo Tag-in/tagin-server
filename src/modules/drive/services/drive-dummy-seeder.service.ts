@@ -12,6 +12,7 @@ import { resolveTestUserId } from '../../../common/utils/test-user.util.js';
 import { ObjectStorageService } from '../../../core/storage/object-storage.service.js';
 import { addItemsToFolders } from '../utils/centroid.util.js';
 import { EmbeddingService } from './embedding.service.js';
+import { errorMessage } from '../../../common/utils/error-message.util.js';
 
 const FIXTURE_DIR = join(process.cwd(), 'test', 'fixtures', 'dummy-files');
 const ROOT_FOLDER_NAME = 'dummy-files';
@@ -85,7 +86,7 @@ export class DriveDummySeeder implements OnApplicationBootstrap {
     const ownerId = resolveTestUserId();
     if (!ownerId || !this.config.get<boolean>('SEED_DUMMY_DRIVE')) return;
     void this.seed(ownerId).catch((e: Error) =>
-      this.logger.error(`더미 파일 업로드 중단: ${e.message}`),
+      this.logger.error(`더미 파일 업로드 중단: ${errorMessage(e)}`),
     );
   }
 

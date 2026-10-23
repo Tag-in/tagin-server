@@ -19,6 +19,7 @@ import {
   type ZipFile,
   type ZipFolder,
 } from '../utils/zip-plan.util.js';
+import { errorMessage } from '../../../common/utils/error-message.util.js';
 
 /** presigned URL 유효 시간 */
 const URL_EXPIRES_SECONDS = 5 * 60;
@@ -233,7 +234,7 @@ export class DriveDownloadService {
     } catch (error) {
       // 클라이언트가 끊은 경우는 오류가 아니다.
       if (!archive.destroyed) {
-        this.logger.error(`ZIP 생성 실패: ${(error as Error).message}`);
+        this.logger.error(`ZIP 생성 실패: ${errorMessage(error)}`);
       }
       archive.destroy(error as Error);
     }

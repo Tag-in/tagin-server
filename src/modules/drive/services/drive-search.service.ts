@@ -11,6 +11,7 @@ import type {
   DriveSearchResponseDto,
 } from '../dto/drive-search-response.dto.js';
 import { EmbeddingService } from './embedding.service.js';
+import { errorMessage } from '../../../common/utils/error-message.util.js';
 
 export interface DriveSearchOptions {
   query: string;
@@ -103,7 +104,7 @@ export class DriveSearchService {
     try {
       return await this.embedding.embed(query);
     } catch (e) {
-      this.logger.error(`검색어 임베딩 실패: ${(e as Error).message}`);
+      this.logger.error(`검색어 임베딩 실패: ${errorMessage(e)}`);
       throw new ServiceUnavailableException(
         '검색을 일시적으로 사용할 수 없습니다.',
       );
