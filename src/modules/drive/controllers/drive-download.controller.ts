@@ -9,14 +9,13 @@ import {
   Post,
   Res,
   StreamableFile,
-  // UseGuards, // TEMP(test), #18
+  UseGuards,
 } from '@nestjs/common';
 import { ApiProduces, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { CurrentUserId } from '../../../common/decorators/current-user-id.decorator.js';
-// TEMP(test): 테스트용 인증 가드 비활성화 (Tag-in/tagin-server#18). 배포 전 원복
-// import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard.js';
+import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard.js';
 import {
   ApiAuth,
   ApiErrorResponse,
@@ -41,7 +40,7 @@ export class DriveDownloadController {
     HttpStatus.NOT_FOUND,
     '파일이 없거나 본인 소유가 아니거나 휴지통에 있음',
   )
-  // @UseGuards(JwtAuthGuard) // TEMP(test), #18
+  @UseGuards(JwtAuthGuard)
   @Get('items/:itemId/download')
   getUrl(
     @CurrentUserId() userId: string,
@@ -67,7 +66,7 @@ export class DriveDownloadController {
   )
   // 서버가 직접 스트리밍하므로 전역 한도보다 낮게 둔다.
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
-  // @UseGuards(JwtAuthGuard) // TEMP(test), #18
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   @Post('download')
   async downloadZip(
