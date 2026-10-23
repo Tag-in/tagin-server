@@ -50,10 +50,12 @@ npm run build && npm run lint && npm test
 ## 코드 규칙
 
 - ESM 프로젝트다. 상대 경로 import는 `.js` 확장자를 붙인다 (`from './users.service.js'`).
-- 스키마 변경은 반드시 마이그레이션으로 반영한다 (`synchronize` 비활성). 엔티티 수정 후 `npm run migration:generate -- src/database/migrations/<Name>`으로 생성하고, 생성된 SQL을 직접 검토한 뒤 `prettier`로 포맷한다.
+- 디렉터리 구조와 의존 방향은 `README.md`의 구조·규칙 섹션을 따른다. 요약: 인프라는 `src/core`, 상태 없는 공용 코드는 `src/common`, 도메인은 `src/modules/<domain>/{controllers,services,entities,dto,...}`. `core`/`common`은 `modules`를 import하지 않고, 도메인 간 참조는 한 방향(`auth → users`)만 허용한다.
+- 여러 도메인에서 쓰는 코드는 도메인 폴더에 두지 않는다. 가드·데코레이터는 `common/`, DB 관련 공용 코드(transformer, 에러 판별)는 `core/database/`에 둔다.
+- 스키마 변경은 반드시 마이그레이션으로 반영한다 (`synchronize` 비활성). 엔티티 수정 후 `npm run migration:generate -- src/core/database/migrations/<Name>`으로 생성하고, 생성된 SQL을 직접 검토한 뒤 `prettier`로 포맷한다.
 - 마이그레이션은 `run` → `revert` → `run` 순서로 로컬에서 확인하고, 이후 `migration:generate`가 "No changes"인지 확인한다. 이미 머지된 마이그레이션은 수정하지 않고 새로 추가한다.
 - 컬럼은 snake_case(`SnakeNamingStrategy`), 시간은 `timestamptz`, UUID 기본값은 `gen_random_uuid()`(pgcrypto 불필요). `uuid-ossp` 확장은 쓰지 않는다.
-- `bigint` 컬럼은 number 변환 transformer를 사용한다.
+- `bigint` 컬럼은 number 변환 transformer(`core/database/transformers/bigint.transformer.ts`)를 사용한다.
 - 환경변수를 추가하면 `src/config/env.validation.ts`(Joi)와 `.env.example`을 함께 수정한다.
 - 새 기능에는 단위 테스트를 같이 작성한다 (`*.spec.ts`, 소스 옆에 위치). 외부 의존(Google, Redis)은 mock한다.
 - API 문서화 규칙은 `README.md`의 Swagger 섹션을 따른다. 보호 라우트는 `@ApiAuth()` + `@UseGuards(JwtAuthGuard)`를 함께 쓴다.
@@ -67,12 +69,15 @@ npm run build && npm run lint && npm test
 - Refresh Token은 1회용이다. 재발급 시 교체(rotation)하고, 사용된 토큰이 다시 오면 같은 로그인 세션(family) 전체를 폐기한다.
 - 소셜 계정은 `users`와 분리된 `user_identities`(`provider`, `provider_user_id` 유니크)에 저장한다. `provider`는 DB enum이 아니라 문자열이라 Apple 등을 추가해도 마이그레이션이 필요 없다.
 - 계정 상태가 `ACTIVE`가 아니거나 soft delete(`deleted_at`)된 사용자는 로그인과 토큰 재발급이 모두 거부된다.
-- 최초 로그인 시 동시 요청이 와도 사용자가 하나만 생성되어야 한다 (유니크 충돌 시 기존 사용자로 복구).
+- 로그인(`POST /auth/google`)은 계정을 만들지 않는다. 미가입이면 `200 { status: 'SIGNUP_REQUIRED', profile }`을 반환하고, 클라이언트가 가입 화면에서 약관 동의를 받아 `POST /auth/google/signup`(ID Token 재전송)을 호출하면 가입과 동시에 토큰을 발급한다. 프로필은 가입 시 ID Token에서 서버가 다시 읽는다.
+- 가입 시 이용약관·개인정보 동의는 필수(`true`만 허용), 마케팅 동의는 선택이며 동의 시각을 각각 기록한다.
+- 가입 요청이 동시에 와도 사용자가 하나만 생성되어야 한다 (유니크 충돌 시 `409`). 이미 가입된 계정(탈퇴 포함)의 가입 요청도 `409`다.
 
 ## 미결 사항 (확정 전 임의로 정하지 말 것)
 
 - `storage_limit_bytes` 기본값 5GiB는 임시 값이다. 요금제 정책 확정 후 수정한다.
-- 약관/개인정보/마케팅 동의: 컬럼만 있고 수집 흐름이 없다 (현재 가입 시 null).
+- 약관 버전 관리: 가입 시 동의 시각만 기록하고 어떤 버전에 동의했는지는 저장하지 않는다. 약관 개정/재동의 정책 확정 후 추가한다.
+- 탈퇴 회원의 재가입 정책: 현재는 탈퇴 이력이 있는 소셜 계정으로 로그인하면 `403`, 가입하면 `409`다.
 - 회원 탈퇴 API(`status=WITHDRAWN` + soft delete)와 저장 용량 한도 검증은 미구현이다.
 - Apple 로그인은 구현하지 않았다. iOS 앱을 App Store에 출시할 때는 가이드라인 4.8(타사 로그인 제공 시 Apple 로그인 필수)에 걸리므로, 그 전에 추가해야 한다. 추가 시 Apple JWKS 검증, `aud`(`com.tagin.app`), 비공개 릴레이 이메일의 계정 연결 정책, 이름이 최초 1회만 전달되는 점을 고려한다.
 - iOS/Android Google 클라이언트와 Android SHA-1은 네이티브 앱 출시 시점에 발급한다.

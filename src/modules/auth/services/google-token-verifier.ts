@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client, type TokenPayload } from 'google-auth-library';
-import type { SocialProfile } from '../users/users.service.js';
+import type { SocialProfile } from '../../users/types/social-profile.interface.js';
 
 const CLIENT_ID_KEYS = [
   'GOOGLE_WEB_CLIENT_ID',
