@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 /**
- * OpenAI 호환 /embeddings 엔드포인트로 텍스트를 벡터화한다 (OpenAI, Azure, Ollama, vLLM 등).
+ * OpenAI 호환 /embeddings 엔드포인트로 텍스트를 벡터화한다 (기본은 OpenRouter, OpenAI·Azure·Ollama·vLLM 등도 가능).
  * 결과 차원은 drive_folders/drive_items의 vector 차원(EMBEDDING_DIMENSIONS)과 같아야 한다.
  */
 @Injectable()
@@ -33,7 +33,13 @@ export class EmbeddingService {
       }),
       signal: AbortSignal.timeout(30_000),
     });
-    if (!res.ok) throw new Error(`embedding API ${res.status}`);
+    if (!res.ok) {
+      // 잘못된 키·모델 ID·크레딧 부족 등을 로그에서 구분할 수 있도록 응답 본문 일부를 붙인다.
+      const detail = await res.text().catch(() => '');
+      throw new Error(
+        `embedding API ${res.status}${detail ? ` ${detail.slice(0, 200)}` : ''}`,
+      );
+    }
 
     const json = (await res.json()) as { data?: { embedding: number[] }[] };
     const vector = json.data?.[0]?.embedding;

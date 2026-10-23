@@ -41,8 +41,10 @@ export const envValidationSchema = Joi.object({
   AWS_S3_PUBLIC_ENDPOINT: Joi.string().uri().allow('').default(''),
 
   EMBEDDING_API_KEY: Joi.string().allow('').default(''),
-  EMBEDDING_BASE_URL: Joi.string().uri().default('https://api.openai.com/v1'),
-  EMBEDDING_MODEL: Joi.string().default('text-embedding-3-small'),
+  EMBEDDING_BASE_URL: Joi.string()
+    .uri()
+    .default('https://openrouter.ai/api/v1'),
+  EMBEDDING_MODEL: Joi.string().default('openai/text-embedding-3-small'),
   EMBEDDING_DIMENSIONS: Joi.number().integer().positive().default(1536),
   DRIVE_SIMILARITY_THRESHOLD: Joi.number().min(0).max(1).default(0.55),
   // 휴지통 보관 일수. 이 기간이 지나면 매일 새벽 자동 영구 삭제된다.

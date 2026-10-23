@@ -43,6 +43,13 @@ describe('EmbeddingService', () => {
     await expect(service.embed('매출')).rejects.toThrow('embedding API 429');
   });
 
+  it('API 오류 응답 본문을 에러 메시지에 포함한다', async () => {
+    respond(401, { error: { message: 'No auth credentials found' } });
+    await expect(service.embed('매출')).rejects.toThrow(
+      'embedding API 401 {"error":{"message":"No auth credentials found"}}',
+    );
+  });
+
   it('차원이 설정과 다르면 실패한다', async () => {
     respond(200, { data: [{ embedding: [0.1, 0.2] }] });
     await expect(service.embed('매출')).rejects.toThrow('차원');
