@@ -1,0 +1,5 @@
+Dummy text file for GET testing.
+name: file-04.txt
+line 1: Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+line 2: Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+line 3: Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.

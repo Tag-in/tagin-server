@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
-import { AuthModule } from './auth/auth.module.js';
-import { envValidationSchema } from './config/env.validation.js';
-import { databaseConfig } from './database/database.config.js';
-import { DatabaseModule } from './database/database.module.js';
-import { HealthModule } from './health/health.module.js';
-import { RedisModule } from './redis/redis.module.js';
+import { envValidationSchema } from './core/config/env.validation.js';
+import { databaseConfig } from './core/database/database.config.js';
+import { DatabaseModule } from './core/database/database.module.js';
+import { HealthModule } from './core/health/health.module.js';
+import { RedisModule } from './core/redis/redis.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { DriveModule } from './modules/drive/drive.module.js';
 
 @Module({
   imports: [
@@ -32,9 +34,11 @@ import { RedisModule } from './redis/redis.module.js';
       }),
     }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     RedisModule,
     AuthModule,
+    DriveModule,
     HealthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
