@@ -9,6 +9,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Readable } from 'node:stream';
 import { attachmentDisposition } from '../../common/utils/content-disposition.util.js';
+import { errorMessage } from '../../common/utils/error-message.util.js';
 
 /** DeleteObjects 한 번에 보낼 수 있는 최대 키 수 (S3 제한) */
 const DELETE_BATCH_SIZE = 1000;
@@ -98,7 +99,7 @@ export class ObjectStorageService {
           if (error.Key) failed.push(error.Key);
         }
       } catch (e) {
-        this.logger.error(`객체 일괄 삭제 실패: ${(e as Error).message}`);
+        this.logger.error(`객체 일괄 삭제 실패: ${errorMessage(e)}`);
         failed.push(...batch);
       }
     }

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { DataSource } from 'typeorm';
 import { ObjectStorageService } from '../../../core/storage/object-storage.service.js';
+import { errorMessage } from '../../../common/utils/error-message.util.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BATCH_SIZE = 200;
@@ -39,7 +40,7 @@ export class TrashPurgeService {
         );
       }
     } catch (e) {
-      this.logger.error(`휴지통 영구 삭제 실패: ${(e as Error).message}`);
+      this.logger.error(`휴지통 영구 삭제 실패: ${errorMessage(e)}`);
     }
   }
 
