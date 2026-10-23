@@ -1,10 +1,10 @@
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module.js';
+import { setupSwagger } from './common/swagger/swagger.setup.js';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
@@ -23,16 +23,8 @@ async function bootstrap() {
   );
   app.enableShutdownHooks();
 
-  if (config.get<string>('NODE_ENV') !== 'production') {
-    const document = SwaggerModule.createDocument(
-      app,
-      new DocumentBuilder()
-        .setTitle('TAG→IN API')
-        .setVersion('0.0.1')
-        .addBearerAuth()
-        .build(),
-    );
-    SwaggerModule.setup('docs', app, document);
+  if (config.get<boolean>('SWAGGER_ENABLED')) {
+    setupSwagger(app);
   }
 
   await app.listen(config.getOrThrow<number>('PORT'));

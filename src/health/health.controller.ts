@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import {
   HealthCheck,
   HealthCheckService,
@@ -7,6 +8,7 @@ import {
 import { SkipThrottle } from '@nestjs/throttler';
 import { RedisHealthIndicator } from './redis.health.js';
 
+@ApiTags('Health')
 @SkipThrottle()
 @Controller('health')
 export class HealthController {
@@ -16,6 +18,9 @@ export class HealthController {
     private readonly redis: RedisHealthIndicator,
   ) {}
 
+  /**
+   * 서버 상태 확인 (DB, Redis)
+   */
   @Get()
   @HealthCheck()
   check() {
