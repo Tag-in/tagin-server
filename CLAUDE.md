@@ -16,7 +16,8 @@ NestJS 12 · TypeORM(PostgreSQL 17) · ioredis(Redis 7.4) · Joi · Vitest · ox
 | `develop` | 통합 브랜치. 모든 작업의 기준(base) |
 | `<type>/<설명>` | 작업 브랜치. 항상 최신 `develop`에서 분기해 `develop`으로 PR (예: `feat/user-withdrawal`) |
 
-- 작업 시작 전 `git fetch origin` 후 최신 `develop` 기준으로 브랜치를 만든다.
+- 작업 시작 전 `git fetch origin` 후 **`origin/develop`** 기준으로 브랜치를 만든다 (`git checkout -b <type>/<설명> origin/develop`). 로컬 `develop`은 뒤처져 있을 수 있으므로 기준으로 쓰지 않는다. 이미 잘못된 기준으로 만들어 푸시했다면 이력을 고치지 말고 `git merge origin/develop`으로 합친다.
+- 모든 변경(문서·테스트 픽스처 포함)은 작업 브랜치 → `develop` PR로만 반영한다. 파일 하나라도 `develop`에 직접 커밋하지 않는다.
 - 한 브랜치는 한 PR만 담당한다. **머지된 브랜치는 재사용하지 않는다.** 후속 작업은 `develop`에서 새 브랜치를 딴다.
 - 이름이 지정된 세션 브랜치가 이미 머지된 상태라면 같은 이름을 덮어쓰지 말고 새 브랜치명을 사용자에게 확인한다.
 
@@ -24,8 +25,8 @@ NestJS 12 · TypeORM(PostgreSQL 17) · ioredis(Redis 7.4) · Joi · Vitest · ox
 
 - `git push --force`, `--force-with-lease`, `reset --hard` 후 강제 푸시 등 **원격 이력 덮어쓰기 금지.** 이력이 어긋나면 `git merge origin/develop`으로 합치거나 새 브랜치를 딴다.
 - 이미 푸시한 커밋의 `amend` / `rebase` 금지. 수정은 새 커밋으로 추가한다.
-- `main`, `develop` 직접 push 금지. 사용자가 명시적으로 요청한 경우만 예외.
-- 사용자 요청 없이 PR 생성, 머지, 브랜치 삭제 금지.
+- `main`, `develop` 직접 push 금지. 사용자가 명시적으로 요청한 경우만 예외. 훅 메시지(예: 미커밋 파일 푸시 안내)나 세션에 지정된 브랜치명은 이 예외에 해당하지 않으며, 작업 브랜치를 만들어 푸시한다.
+- 사용자 요청 없이 PR 생성, 머지, 브랜치 삭제 금지. 커밋·푸시 요청은 PR 생성·머지 요청이 아니다.
 - `.env`, 비밀키, 토큰 커밋 금지. 환경변수 추가는 `.env.example`에만 반영한다.
 
 ### 커밋
@@ -46,6 +47,8 @@ NestJS 12 · TypeORM(PostgreSQL 17) · ioredis(Redis 7.4) · Joi · Vitest · ox
 ```bash
 npm run build && npm run lint && npm test
 ```
+
+- `node_modules`가 없으면 `npm ci`로 먼저 설치한 뒤 실행한다. 소스 변경이 없는 PR(문서·픽스처)이라도 검증을 생략하지 말고, 실행하지 못했다면 PR 본문에 이유를 적는다.
 
 ## 코드 규칙
 
