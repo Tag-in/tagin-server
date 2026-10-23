@@ -50,10 +50,12 @@ npm run build && npm run lint && npm test
 ## 코드 규칙
 
 - ESM 프로젝트다. 상대 경로 import는 `.js` 확장자를 붙인다 (`from './users.service.js'`).
-- 스키마 변경은 반드시 마이그레이션으로 반영한다 (`synchronize` 비활성). 엔티티 수정 후 `npm run migration:generate -- src/database/migrations/<Name>`으로 생성하고, 생성된 SQL을 직접 검토한 뒤 `prettier`로 포맷한다.
+- 디렉터리 구조와 의존 방향은 `README.md`의 구조·규칙 섹션을 따른다. 요약: 인프라는 `src/core`, 상태 없는 공용 코드는 `src/common`, 도메인은 `src/modules/<domain>/{controllers,services,entities,dto,...}`. `core`/`common`은 `modules`를 import하지 않고, 도메인 간 참조는 한 방향(`auth → users`)만 허용한다.
+- 여러 도메인에서 쓰는 코드는 도메인 폴더에 두지 않는다. 가드·데코레이터는 `common/`, DB 관련 공용 코드(transformer, 에러 판별)는 `core/database/`에 둔다.
+- 스키마 변경은 반드시 마이그레이션으로 반영한다 (`synchronize` 비활성). 엔티티 수정 후 `npm run migration:generate -- src/core/database/migrations/<Name>`으로 생성하고, 생성된 SQL을 직접 검토한 뒤 `prettier`로 포맷한다.
 - 마이그레이션은 `run` → `revert` → `run` 순서로 로컬에서 확인하고, 이후 `migration:generate`가 "No changes"인지 확인한다. 이미 머지된 마이그레이션은 수정하지 않고 새로 추가한다.
 - 컬럼은 snake_case(`SnakeNamingStrategy`), 시간은 `timestamptz`, UUID 기본값은 `gen_random_uuid()`(pgcrypto 불필요). `uuid-ossp` 확장은 쓰지 않는다.
-- `bigint` 컬럼은 number 변환 transformer를 사용한다.
+- `bigint` 컬럼은 number 변환 transformer(`core/database/transformers/bigint.transformer.ts`)를 사용한다.
 - 환경변수를 추가하면 `src/config/env.validation.ts`(Joi)와 `.env.example`을 함께 수정한다.
 - 새 기능에는 단위 테스트를 같이 작성한다 (`*.spec.ts`, 소스 옆에 위치). 외부 의존(Google, Redis)은 mock한다.
 - API 문서화 규칙은 `README.md`의 Swagger 섹션을 따른다. 보호 라우트는 `@ApiAuth()` + `@UseGuards(JwtAuthGuard)`를 함께 쓴다.

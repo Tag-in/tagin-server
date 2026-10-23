@@ -32,32 +32,54 @@ npm run start:dev
 | `npm run lint` / `npm run format` | oxlint / prettier |
 | `npm test` | 단위 테스트 (Vitest) |
 | `npm run test:e2e` | e2e 테스트 (`npm run db:up` 선행 필요) |
-| `npm run migration:generate -- src/database/migrations/<Name>` | 엔티티 변경 사항으로 마이그레이션 생성 |
-| `npm run migration:create -- src/database/migrations/<Name>` | 빈 마이그레이션 생성 |
+| `npm run migration:generate -- src/core/database/migrations/<Name>` | 엔티티 변경 사항으로 마이그레이션 생성 |
+| `npm run migration:create -- src/core/database/migrations/<Name>` | 빈 마이그레이션 생성 |
 | `npm run migration:run` / `npm run migration:revert` | 마이그레이션 적용 / 롤백 |
 
-> 마이그레이션 명령은 빌드 결과물(`dist/database/data-source.js`)을 기준으로 동작하며, 스크립트가 빌드를 먼저 수행합니다.
+> 마이그레이션 명령은 빌드 결과물(`dist/core/database/data-source.js`)을 기준으로 동작하며, 스크립트가 빌드를 먼저 수행합니다.
 
 ## 구조
 
 ```
 src/
-├── main.ts               # 부트스트랩 (helmet, CORS, ValidationPipe, Swagger, prefix: /api)
-├── common/swagger/       # Swagger 설정, 문서화 공통 데코레이터/DTO
-├── app.module.ts         # Config, Logger(pino), Throttler(전역 가드) 등록
-├── config/               # 환경변수 검증 스키마 (Joi)
-├── database/             # TypeORM 설정, CLI용 data-source, migrations
-├── redis/                # 전역 Redis 클라이언트 (@Inject(REDIS_CLIENT))
-├── auth/                 # Google 로그인·가입(ID Token), Access JWT + Refresh Token(Redis), JwtAuthGuard
-├── users/                # User 엔티티, UsersModule
-└── health/               # Terminus 헬스체크
+├── main.ts                    # 부트스트랩 (helmet, CORS, ValidationPipe, Swagger, prefix: /api)
+├── app.module.ts              # Config, Logger(pino), Throttler(전역 가드), core/도메인 모듈 등록
+├── core/                      # 앱 전역 인프라. AppModule에서 한 번만 등록
+│   ├── config/                # 환경변수 검증 스키마 (Joi)
+│   ├── database/              # TypeORM 설정, CLI용 data-source, migrations, transformers, utils
+│   ├── redis/                 # 전역 Redis 클라이언트 (@Inject(REDIS_CLIENT))
+│   └── health/                # Terminus 헬스체크 (indicators/)
+├── common/                    # 상태 없는 공용 코드 (어느 도메인에도 속하지 않음)
+│   ├── guards/                # JwtAuthGuard
+│   └── swagger/               # Swagger 설정, 문서화 공통 데코레이터/DTO
+└── modules/                   # 비즈니스 도메인
+    ├── auth/                  # Google 로그인·가입(ID Token), Access JWT + Refresh Token(Redis)
+    └── users/                 # User·UserIdentity 엔티티, 사용자 계정 규칙
+```
+
+도메인 모듈 내부는 계층별 폴더로 나눈다. 필요한 폴더만 만든다.
+
+```
+modules/<domain>/
+├── <domain>.module.ts
+├── controllers/   # HTTP 진입점 (요청 검증·응답 매핑만, 로직 없음)
+├── services/      # 유스케이스·도메인 로직, 외부 API 어댑터
+├── entities/      # TypeORM 엔티티 (*.entity.ts)
+├── dto/           # 요청/응답 DTO (*.dto.ts)
+├── strategies/    # Passport 전략
+├── types/         # 인터페이스·타입
+├── utils/         # 도메인 순수 함수
+└── constants/     # 도메인 상수
 ```
 
 ## 규칙
 
+- 의존 방향은 `modules → common, core`, `common → core`만 허용한다. `core`·`common`은 `modules`를 import하지 않는다.
+- 도메인 간 참조는 한 방향으로만 한다 (현재 `auth → users`). 다른 도메인은 대상 모듈이 `exports`한 서비스와 `entities`/`types`/`utils`만 사용하고, 상대 도메인의 controller·내부 서비스는 직접 쓰지 않는다. 순환이 생기면 공통 부분을 상위로 분리한다.
+- 두 개 이상의 도메인이 쓰는 코드(가드, 데코레이터, DB 유틸 등)는 특정 도메인에 두지 않고 `common/` 또는 `core/`로 올린다.
 - 엔티티 파일명은 `*.entity.ts`. 모듈에서 `TypeOrmModule.forFeature([...])`로 등록하면 자동 로드된다.
 - `synchronize`는 비활성화되어 있으므로 스키마 변경은 반드시 마이그레이션으로 반영한다.
-- 보호가 필요한 라우트에는 `@UseGuards(JwtAuthGuard)`를 사용한다.
+- 보호가 필요한 라우트에는 `common/guards`의 `@UseGuards(JwtAuthGuard)`를 사용한다.
 
 ## API 문서화 (Swagger)
 
