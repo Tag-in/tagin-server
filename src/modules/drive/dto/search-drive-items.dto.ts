@@ -21,7 +21,7 @@ export class SearchDriveItemsDto {
   @MaxLength(500)
   q: string;
 
-  /** 검색 범위로 선택한 폴더. 지정하면 이 폴더 안의 항목만 찾고, 비우면 내 드라이브 전체에서 찾는다. */
+  /** 검색 범위로 선택한 폴더. 지정하면 이 폴더와 하위 폴더의 항목만 찾고, 비우면 내 드라이브 전체에서 찾는다. */
   @IsOptional()
   @IsUUID()
   folderId?: string;
