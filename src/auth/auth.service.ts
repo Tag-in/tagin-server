@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { AuthProvider } from '../users/user-identity.entity.js';
 import { UsersService } from '../users/users.service.js';
 import type { TokenResponseDto } from './dto/token-response.dto.js';
 import { GoogleTokenVerifier } from './google-token-verifier.js';
@@ -17,7 +18,10 @@ export class AuthService {
 
   async loginWithGoogle(idToken: string): Promise<TokenResponseDto> {
     const profile = await this.googleVerifier.verify(idToken);
-    const user = await this.users.findOrCreateByGoogle(profile);
+    const user = await this.users.findOrCreateBySocial(
+      AuthProvider.GOOGLE,
+      profile,
+    );
     return this.toTokens(user.id, await this.refreshTokens.issue(user.id));
   }
 

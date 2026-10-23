@@ -1,30 +1,57 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { AuthProvider, UserIdentity } from './user-identity.entity.js';
 import { User } from './user.entity.js';
 
-export type GoogleProfile = Pick<
-  User,
-  'googleId' | 'email' | 'name' | 'picture'
->;
+export interface SocialProfile {
+  providerUserId: string;
+  email: string;
+  name: string;
+  picture: string | null;
+}
+
+const PG_UNIQUE_VIOLATION = '23505';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) private readonly users: Repository<User>,
+    @InjectRepository(UserIdentity)
+    private readonly identities: Repository<UserIdentity>,
   ) {}
 
-  async findOrCreateByGoogle(profile: GoogleProfile): Promise<User> {
-    const existing = await this.users.findOneBy({ googleId: profile.googleId });
+  async findOrCreateBySocial(
+    provider: AuthProvider,
+    { providerUserId, ...profile }: SocialProfile,
+  ): Promise<User> {
+    const find = async () =>
+      (
+        await this.identities.findOne({
+          where: { provider, providerUserId },
+          relations: { user: true },
+        })
+      )?.user;
+
+    const existing = await find();
     if (existing) return existing;
 
-    // 최초 로그인 동시 요청 시 unique 충돌을 무시하고 먼저 생성된 행을 사용한다.
-    await this.users
-      .createQueryBuilder()
-      .insert()
-      .values(profile)
-      .orIgnore()
-      .execute();
-    return this.users.findOneByOrFail({ googleId: profile.googleId });
+    try {
+      return await this.identities.manager.transaction(async (em) => {
+        const user = await em.save(em.create(User, profile));
+        await em.insert(UserIdentity, {
+          provider,
+          providerUserId,
+          userId: user.id,
+        });
+        return user;
+      });
+    } catch (error) {
+      // 최초 로그인 동시 요청: 먼저 커밋된 계정을 사용한다.
+      const code = (error as { driverError?: { code?: string } }).driverError
+        ?.code;
+      const created = code === PG_UNIQUE_VIOLATION ? await find() : undefined;
+      if (created) return created;
+      throw error;
+    }
   }
 }
