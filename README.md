@@ -47,6 +47,7 @@ src/
 ├── core/                      # 앱 전역 인프라. AppModule에서 한 번만 등록
 │   ├── config/                # 환경변수 검증 스키마 (Joi)
 │   ├── database/              # TypeORM 설정, CLI용 data-source, migrations, transformers, utils
+│   ├── storage/               # 오브젝트 스토리지(S3/MinIO) 클라이언트 (업로드·삭제)
 │   ├── redis/                 # 전역 Redis 클라이언트 (@Inject(REDIS_CLIENT))
 │   └── health/                # Terminus 헬스체크 (indicators/)
 ├── common/                    # 상태 없는 공용 코드 (어느 도메인에도 속하지 않음)
@@ -54,7 +55,7 @@ src/
 │   └── swagger/               # Swagger 설정, 문서화 공통 데코레이터/DTO
 └── modules/                   # 비즈니스 도메인
     ├── auth/                  # Google 로그인·가입(ID Token), Access JWT + Refresh Token(Redis)
-    ├── drive/                 # 파일·링크·폴더(계층). 임베딩 기반 의미 검색·자동 분류(pgvector), 이동
+    ├── drive/                 # 파일·링크·폴더(계층). 임베딩 기반 의미 검색·자동 분류(pgvector), 이동, 휴지통(삭제·복원·자동 영구 삭제)
     └── users/                 # User·UserIdentity 엔티티, 사용자 계정 규칙
 ```
 

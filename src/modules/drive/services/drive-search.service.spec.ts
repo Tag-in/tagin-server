@@ -41,6 +41,7 @@ describe('DriveSearchService', () => {
     expect(sql).toContain('i.owner_id = $1');
     expect(sql).not.toContain('folder_id = $4');
     expect(sql).toContain('ORDER BY i.embedding <=> $2::vector');
+    expect(sql).toContain('i.deleted_at IS NULL');
     expect(params).toEqual(['user-1', '[0.1,0.2,0.3]', 20]);
     expect(result.items).toEqual([
       {
@@ -71,7 +72,7 @@ describe('DriveSearchService', () => {
 
     expect(dataSource.query.mock.calls[0]![1]).toEqual(['folder-1', 'user-1']);
     const [sql, params] = dataSource.query.mock.calls[1]!;
-    expect(sql).toContain('i.owner_id = $1 AND i.folder_id IN (');
+    expect(sql).toContain('i.deleted_at IS NULL AND i.folder_id IN (');
     expect(sql).toContain('WITH RECURSIVE subtree');
     expect(params).toEqual(['user-1', '[0.1,0.2,0.3]', 5, 'folder-1']);
   });

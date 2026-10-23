@@ -79,6 +79,7 @@ npm run build && npm run lint && npm test
 - 약관 버전 관리: 가입 시 동의 시각만 기록하고 어떤 버전에 동의했는지는 저장하지 않는다. 약관 개정/재동의 정책 확정 후 추가한다.
 - 탈퇴 회원의 재가입 정책: 현재는 탈퇴 이력이 있는 소셜 계정으로 로그인하면 `403`, 가입하면 `409`다.
 - 회원 탈퇴 API(`status=WITHDRAWN` + soft delete)와 저장 용량 한도 검증은 미구현이다.
+- 드라이브 휴지통: 삭제는 soft delete이고 `TRASH_RETENTION_DAYS`(기본 30일)가 지나면 매일 03:00에 스토리지 객체와 DB 행을 영구 삭제한다. 영구 삭제 시 `users.storage_used_bytes`는 차감하지 않는다(업로드가 이 값을 아직 올리지 않으므로 용량 정책과 함께 정한다). 휴지통 목록(`GET /drive/trash`)은 페이지네이션이 없다.
 - Apple 로그인은 구현하지 않았다. iOS 앱을 App Store에 출시할 때는 가이드라인 4.8(타사 로그인 제공 시 Apple 로그인 필수)에 걸리므로, 그 전에 추가해야 한다. 추가 시 Apple JWKS 검증, `aud`(`com.tagin.app`), 비공개 릴레이 이메일의 계정 연결 정책, 이름이 최초 1회만 전달되는 점을 고려한다.
 - iOS/Android Google 클라이언트와 Android SHA-1은 네이티브 앱 출시 시점에 발급한다.
 - 실제 Google 토큰 검증과 Redis 연동은 mock 단위 테스트로만 검증됐다. 스테이징에서 실제 토큰으로 확인이 필요하다.
