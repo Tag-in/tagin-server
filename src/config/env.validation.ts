@@ -9,6 +9,7 @@ export const envValidationSchema = Joi.object({
   LOG_LEVEL: Joi.string()
     .valid('fatal', 'error', 'warn', 'info', 'debug', 'trace')
     .default('info'),
+  SWAGGER_ENABLED: Joi.boolean().default(false),
 
   DB_HOST: Joi.string().required(),
   DB_PORT: Joi.number().port().default(5432),
