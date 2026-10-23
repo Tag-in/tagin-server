@@ -11,10 +11,6 @@ export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  /** Google 계정 고유 ID (ID Token의 sub) */
-  @Column({ unique: true })
-  googleId: string;
-
   @Column({ unique: true })
   email: string;
 

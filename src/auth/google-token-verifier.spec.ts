@@ -37,7 +37,7 @@ describe('GoogleTokenVerifier', () => {
     );
 
     await expect(verifier.verify('id-token')).resolves.toEqual({
-      googleId: 'g-1',
+      providerUserId: 'g-1',
       email: 'a@tagin.com',
       name: '태그인',
       picture: 'https://img',

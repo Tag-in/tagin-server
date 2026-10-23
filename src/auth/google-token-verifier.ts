@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OAuth2Client, type TokenPayload } from 'google-auth-library';
-import type { GoogleProfile } from '../users/users.service.js';
+import type { SocialProfile } from '../users/users.service.js';
 
 const CLIENT_ID_KEYS = [
   'GOOGLE_WEB_CLIENT_ID',
@@ -24,7 +24,7 @@ export class GoogleTokenVerifier {
     ).filter((id): id is string => !!id);
   }
 
-  async verify(idToken: string): Promise<GoogleProfile> {
+  async verify(idToken: string): Promise<SocialProfile> {
     let payload: TokenPayload | undefined;
     try {
       const ticket = await this.client.verifyIdToken({
@@ -46,7 +46,7 @@ export class GoogleTokenVerifier {
     }
 
     return {
-      googleId: payload.sub,
+      providerUserId: payload.sub,
       email: payload.email,
       name: payload.name ?? payload.email,
       picture: payload.picture ?? null,
