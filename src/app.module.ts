@@ -10,7 +10,6 @@ import { HealthModule } from './core/health/health.module.js';
 import { RedisModule } from './core/redis/redis.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { DriveModule } from './modules/drive/drive.module.js';
-import { FilesModule } from './modules/files/files.module.js';
 
 @Module({
   imports: [
@@ -37,7 +36,6 @@ import { FilesModule } from './modules/files/files.module.js';
     DatabaseModule,
     RedisModule,
     AuthModule,
-    FilesModule,
     DriveModule,
     HealthModule,
   ],
