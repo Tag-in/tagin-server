@@ -61,7 +61,13 @@ export class DriveSearchService {
     let scope = '';
     if (folderId) {
       params.push(folderId);
-      scope = 'AND i.folder_id = $4';
+      // 선택한 폴더와 그 하위 폴더 전체
+      scope = `AND i.folder_id IN (
+        WITH RECURSIVE subtree AS (
+          SELECT id FROM drive_folders WHERE id = $4
+          UNION ALL
+          SELECT f.id FROM drive_folders f JOIN subtree s ON f.parent_id = s.id
+        ) SELECT id FROM subtree)`;
     }
 
     const rows: SearchRow[] = await this.dataSource.query(

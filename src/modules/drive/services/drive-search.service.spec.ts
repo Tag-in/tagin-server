@@ -59,7 +59,7 @@ describe('DriveSearchService', () => {
     ]);
   });
 
-  it('폴더를 지정하면 소유를 확인한 뒤 그 폴더 안에서만 찾는다', async () => {
+  it('폴더를 지정하면 소유를 확인한 뒤 그 폴더와 하위 폴더 안에서만 찾는다', async () => {
     dataSource.query.mockResolvedValueOnce([{ '?column?': 1 }]);
     dataSource.query.mockResolvedValueOnce([]);
 
@@ -71,7 +71,8 @@ describe('DriveSearchService', () => {
 
     expect(dataSource.query.mock.calls[0]![1]).toEqual(['folder-1', 'user-1']);
     const [sql, params] = dataSource.query.mock.calls[1]!;
-    expect(sql).toContain('i.owner_id = $1 AND i.folder_id = $4');
+    expect(sql).toContain('i.owner_id = $1 AND i.folder_id IN (');
+    expect(sql).toContain('WITH RECURSIVE subtree');
     expect(params).toEqual(['user-1', '[0.1,0.2,0.3]', 5, 'folder-1']);
   });
 
