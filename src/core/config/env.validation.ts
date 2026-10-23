@@ -28,4 +28,16 @@ export const envValidationSchema = Joi.object({
   GOOGLE_WEB_CLIENT_ID: Joi.string().required(),
   GOOGLE_IOS_CLIENT_ID: Joi.string().allow('').default(''),
   GOOGLE_ANDROID_CLIENT_ID: Joi.string().allow('').default(''),
+
+  AWS_REGION: Joi.string().default('us-east-1'),
+  AWS_ACCESS_KEY_ID: Joi.string().allow('').default(''),
+  AWS_SECRET_ACCESS_KEY: Joi.string().allow('').default(''),
+  AWS_S3_ENDPOINT: Joi.string().uri().allow('').default(''),
+  AWS_S3_BUCKET_NAME: Joi.string().allow('').default(''),
+
+  EMBEDDING_API_KEY: Joi.string().allow('').default(''),
+  EMBEDDING_BASE_URL: Joi.string().uri().default('https://api.openai.com/v1'),
+  EMBEDDING_MODEL: Joi.string().default('text-embedding-3-small'),
+  EMBEDDING_DIMENSIONS: Joi.number().integer().positive().default(1536),
+  DRIVE_SIMILARITY_THRESHOLD: Joi.number().min(0).max(1).default(0.55),
 });
