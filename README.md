@@ -74,6 +74,8 @@ modules/<domain>/
 └── constants/     # 도메인 상수
 ```
 
+단위 테스트(`*.spec.ts`)는 기능 파일 옆에 두지 않고 각 계층 폴더의 `test/`에 둔다 (예: `services/test/auth.service.spec.ts`). e2e 테스트는 루트 `test/`에 있다.
+
 ## 규칙
 
 - 의존 방향은 `modules → common, core`, `common → core`만 허용한다. `core`·`common`은 `modules`를 import하지 않는다.

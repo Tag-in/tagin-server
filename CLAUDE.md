@@ -57,7 +57,7 @@ npm run build && npm run lint && npm test
 - 컬럼은 snake_case(`SnakeNamingStrategy`), 시간은 `timestamptz`, UUID 기본값은 `gen_random_uuid()`(pgcrypto 불필요). `uuid-ossp` 확장은 쓰지 않는다.
 - `bigint` 컬럼은 number 변환 transformer(`core/database/transformers/bigint.transformer.ts`)를 사용한다.
 - 환경변수를 추가하면 `src/config/env.validation.ts`(Joi)와 `.env.example`을 함께 수정한다.
-- 새 기능에는 단위 테스트를 같이 작성한다 (`*.spec.ts`, 소스 옆에 위치). 외부 의존(Google, Redis)은 mock한다.
+- 새 기능에는 단위 테스트를 같이 작성한다. spec은 소스 옆에 두지 않고 같은 계층 폴더의 `test/`에 둔다 (`services/foo.service.ts` → `services/test/foo.service.spec.ts`, import는 `../foo.service.js`). 외부 의존(Google, Redis)은 mock한다.
 - API 문서화 규칙은 `README.md`의 Swagger 섹션을 따른다. 보호 라우트는 `@ApiAuth()` + `@UseGuards(JwtAuthGuard)`를 함께 쓴다.
 
 ## 인증 도메인 핵심
