@@ -1,6 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthProvider } from '../users/user-identity.entity.js';
+import { UserStatus } from '../users/user.entity.js';
 import { UsersService } from '../users/users.service.js';
 import type { TokenResponseDto } from './dto/token-response.dto.js';
 import { GoogleTokenVerifier } from './google-token-verifier.js';
@@ -22,11 +27,24 @@ export class AuthService {
       AuthProvider.GOOGLE,
       profile,
     );
+    if (user.status !== UserStatus.ACTIVE || user.deletedAt) {
+      throw new ForbiddenException('이용할 수 없는 계정입니다.');
+    }
+
+    await this.users.recordLogin(user.id);
     return this.toTokens(user.id, await this.refreshTokens.issue(user.id));
   }
 
   async refresh(refreshToken: string): Promise<TokenResponseDto> {
     const rotated = await this.refreshTokens.rotate(refreshToken);
+
+    // 정지/탈퇴된 계정은 더 이상 재발급하지 않는다.
+    const user = await this.users.findById(rotated.userId);
+    if (user?.status !== UserStatus.ACTIVE) {
+      await this.refreshTokens.revoke(rotated.refreshToken);
+      throw new UnauthorizedException('유효하지 않은 Refresh Token입니다.');
+    }
+
     return this.toTokens(rotated.userId, rotated.refreshToken);
   }
 
