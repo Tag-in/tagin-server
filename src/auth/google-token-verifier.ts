@@ -47,9 +47,9 @@ export class GoogleTokenVerifier {
 
     return {
       providerUserId: payload.sub,
-      email: payload.email,
-      name: payload.name ?? payload.email,
-      picture: payload.picture ?? null,
+      email: payload.email.toLowerCase(),
+      nickname: payload.name ?? payload.email.split('@')[0],
+      profileImageUrl: payload.picture ?? null,
     };
   }
 }

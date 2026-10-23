@@ -16,7 +16,10 @@ export class AuthController {
   /** Google ID Token으로 로그인 (최초 로그인 시 자동 가입) */
   @ApiErrorResponse(HttpStatus.BAD_REQUEST, '요청 값 검증 실패')
   @ApiErrorResponse(HttpStatus.UNAUTHORIZED, '유효하지 않은 Google 토큰')
-  @ApiErrorResponse(HttpStatus.FORBIDDEN, '이메일 인증이 안 된 Google 계정')
+  @ApiErrorResponse(
+    HttpStatus.FORBIDDEN,
+    '이메일 인증이 안 된 Google 계정 또는 이용할 수 없는 계정(정지/탈퇴)',
+  )
   @HttpCode(HttpStatus.OK)
   @Post('google')
   loginWithGoogle(@Body() dto: GoogleLoginDto): Promise<TokenResponseDto> {

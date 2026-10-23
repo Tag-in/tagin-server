@@ -7,8 +7,8 @@ import { User } from './user.entity.js';
 export interface SocialProfile {
   providerUserId: string;
   email: string;
-  name: string;
-  picture: string | null;
+  nickname: string;
+  profileImageUrl: string | null;
 }
 
 const PG_UNIQUE_VIOLATION = '23505';
@@ -18,8 +18,22 @@ export class UsersService {
   constructor(
     @InjectRepository(UserIdentity)
     private readonly identities: Repository<UserIdentity>,
+    @InjectRepository(User) private readonly users: Repository<User>,
   ) {}
 
+  findById(id: string): Promise<User | null> {
+    return this.users.findOneBy({ id });
+  }
+
+  async recordLogin(id: string): Promise<void> {
+    await this.users.update(id, { lastLoginAt: new Date() });
+  }
+
+  /**
+   * 소셜 계정에 연결된 사용자를 반환하고, 없으면 가입시킨다.
+   * 탈퇴(soft delete)한 사용자도 반환하므로 호출 측에서 status를 확인해야 한다.
+   * 소셜 로그인은 이메일 인증이 선행되므로 가입 시 emailVerifiedAt을 기록한다.
+   */
   async findOrCreateBySocial(
     provider: AuthProvider,
     { providerUserId, ...profile }: SocialProfile,
@@ -29,6 +43,7 @@ export class UsersService {
         await this.identities.findOne({
           where: { provider, providerUserId },
           relations: { user: true },
+          withDeleted: true,
         })
       )?.user;
 
@@ -37,7 +52,9 @@ export class UsersService {
 
     try {
       return await this.identities.manager.transaction(async (em) => {
-        const user = await em.save(em.create(User, profile));
+        const user = await em.save(
+          em.create(User, { ...profile, emailVerifiedAt: new Date() }),
+        );
         await em.insert(UserIdentity, {
           provider,
           providerUserId,

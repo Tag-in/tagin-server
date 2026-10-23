@@ -29,7 +29,7 @@ describe('GoogleTokenVerifier', () => {
     verifyIdToken.mockResolvedValueOnce(
       ticketOf({
         sub: 'g-1',
-        email: 'a@tagin.com',
+        email: 'A@Tagin.com',
         email_verified: true,
         name: '태그인',
         picture: 'https://img',
@@ -39,8 +39,8 @@ describe('GoogleTokenVerifier', () => {
     await expect(verifier.verify('id-token')).resolves.toEqual({
       providerUserId: 'g-1',
       email: 'a@tagin.com',
-      name: '태그인',
-      picture: 'https://img',
+      nickname: '태그인',
+      profileImageUrl: 'https://img',
     });
     expect(verifyIdToken).toHaveBeenCalledWith({
       idToken: 'id-token',
