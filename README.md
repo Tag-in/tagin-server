@@ -48,7 +48,7 @@ src/
 ├── config/               # 환경변수 검증 스키마 (Joi)
 ├── database/             # TypeORM 설정, CLI용 data-source, migrations
 ├── redis/                # 전역 Redis 클라이언트 (@Inject(REDIS_CLIENT))
-├── auth/                 # Google 로그인(ID Token), Access JWT + Refresh Token(Redis), JwtAuthGuard
+├── auth/                 # Google 로그인·가입(ID Token), Access JWT + Refresh Token(Redis), JwtAuthGuard
 ├── users/                # User 엔티티, UsersModule
 └── health/               # Terminus 헬스체크
 ```
