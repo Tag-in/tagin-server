@@ -5,17 +5,17 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthProvider } from '../users/user-identity.entity.js';
-import { UserStatus, type User } from '../users/user.entity.js';
-import { UsersService } from '../users/users.service.js';
+import { AuthProvider } from '../../users/entities/user-identity.entity.js';
+import { UsersService } from '../../users/services/users.service.js';
+import { isUsableUser } from '../../users/utils/user-status.util.js';
 import {
   GoogleLoginStatus,
   type GoogleLoginResponseDto,
-} from './dto/google-login-response.dto.js';
-import type { GoogleSignupDto } from './dto/google-signup.dto.js';
-import type { TokenResponseDto } from './dto/token-response.dto.js';
+} from '../dto/google-login-response.dto.js';
+import type { GoogleSignupDto } from '../dto/google-signup.dto.js';
+import type { TokenResponseDto } from '../dto/token-response.dto.js';
+import type { JwtPayload } from '../types/jwt-payload.interface.js';
 import { GoogleTokenVerifier } from './google-token-verifier.js';
-import type { JwtPayload } from './jwt-payload.interface.js';
 import { RefreshTokenService } from './refresh-token.service.js';
 
 @Injectable()
@@ -38,7 +38,9 @@ export class AuthService {
     if (!user) {
       return { status: GoogleLoginStatus.SIGNUP_REQUIRED, profile };
     }
-    this.assertUsable(user);
+    if (!isUsableUser(user)) {
+      throw new ForbiddenException('이용할 수 없는 계정입니다.');
+    }
 
     return {
       status: GoogleLoginStatus.LOGIN,
@@ -67,7 +69,7 @@ export class AuthService {
 
     // 정지/탈퇴된 계정은 더 이상 재발급하지 않는다.
     const user = await this.users.findById(rotated.userId);
-    if (user?.status !== UserStatus.ACTIVE) {
+    if (!isUsableUser(user)) {
       await this.refreshTokens.revoke(rotated.refreshToken);
       throw new UnauthorizedException('유효하지 않은 Refresh Token입니다.');
     }
@@ -77,12 +79,6 @@ export class AuthService {
 
   logout(refreshToken: string): Promise<void> {
     return this.refreshTokens.revoke(refreshToken);
-  }
-
-  private assertUsable(user: User): void {
-    if (user.status !== UserStatus.ACTIVE || user.deletedAt) {
-      throw new ForbiddenException('이용할 수 없는 계정입니다.');
-    }
   }
 
   private async startSession(userId: string): Promise<TokenResponseDto> {

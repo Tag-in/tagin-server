@@ -4,11 +4,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import type { JwtService } from '@nestjs/jwt';
-import { AuthProvider } from '../users/user-identity.entity.js';
-import { UserStatus, type User } from '../users/user.entity.js';
-import type { UsersService } from '../users/users.service.js';
+import { AuthProvider } from '../../users/entities/user-identity.entity.js';
+import { UserStatus, type User } from '../../users/entities/user.entity.js';
+import type { UsersService } from '../../users/services/users.service.js';
+import { GoogleLoginStatus } from '../dto/google-login-response.dto.js';
 import { AuthService } from './auth.service.js';
-import { GoogleLoginStatus } from './dto/google-login-response.dto.js';
 import type { GoogleTokenVerifier } from './google-token-verifier.js';
 import type { RefreshTokenService } from './refresh-token.service.js';
 

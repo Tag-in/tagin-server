@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { bigintTransformer } from '../../../core/database/transformers/bigint.transformer.js';
 
 export enum UserStatus {
   ACTIVE = 'ACTIVE',
@@ -20,13 +21,6 @@ export enum UserRole {
 
 // TODO: 요금제 정책 확정 후 조정 (임시 기본값 5GiB)
 export const DEFAULT_STORAGE_LIMIT_BYTES = 5 * 1024 ** 3;
-
-// bigint는 드라이버가 문자열로 반환하므로 number로 변환한다. (Number.MAX_SAFE_INTEGER ≈ 9PB)
-const bigintToNumber = {
-  to: (value?: number) => value,
-  from: (value?: string | null) =>
-    value === undefined || value === null ? value : Number(value),
-};
 
 @Entity('users')
 export class User {
@@ -64,13 +58,13 @@ export class User {
   @Column({ type: 'timestamptz', nullable: true })
   marketingAgreedAt: Date | null;
 
-  @Column({ type: 'bigint', default: 0, transformer: bigintToNumber })
+  @Column({ type: 'bigint', default: 0, transformer: bigintTransformer })
   storageUsedBytes: number;
 
   @Column({
     type: 'bigint',
     default: DEFAULT_STORAGE_LIMIT_BYTES,
-    transformer: bigintToNumber,
+    transformer: bigintTransformer,
   })
   storageLimitBytes: number;
 
