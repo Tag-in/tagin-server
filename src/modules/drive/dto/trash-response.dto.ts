@@ -61,3 +61,14 @@ export class TrashListResponseDto {
   /** 직접 삭제한 항목만, 최근 삭제 순. 폴더와 함께 지워진 하위 항목은 폴더를 복원하면 같이 돌아온다. */
   entries: TrashEntryDto[];
 }
+
+export class PurgeDriveResponseDto {
+  /** 영구 삭제한 파일·링크 수 (폴더 안의 항목 포함) */
+  purgedItemCount: number;
+
+  /** 영구 삭제한 폴더 수 (하위 폴더 포함) */
+  purgedFolderCount: number;
+
+  /** 스토리지 객체를 지우지 못해 휴지통에 남긴 파일 수. 보관 기간이 지나면 자동 삭제가 다시 시도한다 */
+  failedItemCount: number;
+}

@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-} from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource, EntityManager } from 'typeorm';
 import { isUniqueViolation } from '../../../core/database/utils/pg-error.util.js';
@@ -22,7 +18,12 @@ import {
   removeItemsFromFolders,
 } from '../utils/centroid.util.js';
 import { planMoves, type PlannedMove } from '../utils/move-plan.util.js';
-import { assertAllFound, sortByRequest } from '../utils/selection.util.js';
+import {
+  assertAllFound,
+  assertSelectionNotEmpty,
+  sortByRequest,
+} from '../utils/selection.util.js';
+import { lockTrash } from '../utils/trash-lock.util.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -64,7 +65,7 @@ export class DriveTrashService {
     userId: string,
     { itemIds = [], folderIds = [] }: DriveSelectionDto,
   ): Promise<DeleteDriveResponseDto> {
-    assertNotEmpty(itemIds, folderIds, '삭제할');
+    assertSelectionNotEmpty(itemIds, folderIds, '삭제할');
 
     return this.dataSource.transaction(async (em) => {
       await lockTrash(em, userId);
@@ -159,7 +160,7 @@ export class DriveTrashService {
     userId: string,
     { itemIds = [], folderIds = [] }: DriveSelectionDto,
   ): Promise<RestoreDriveResponseDto> {
-    assertNotEmpty(itemIds, folderIds, '복원할');
+    assertSelectionNotEmpty(itemIds, folderIds, '복원할');
 
     return this.dataSource.transaction(async (em) => {
       await lockTrash(em, userId);
@@ -388,22 +389,6 @@ export class DriveTrashService {
     return { moves, renamed };
   }
 }
-
-const assertNotEmpty = (
-  itemIds: string[],
-  folderIds: string[],
-  verb: string,
-): void => {
-  if (itemIds.length === 0 && folderIds.length === 0) {
-    throw new BadRequestException(`${verb} 파일 또는 폴더를 지정해야 합니다.`);
-  }
-};
-
-/** 사용자 단위로 삭제·복원을 직렬화한다 (트랜잭션 종료 시 자동 해제). */
-const lockTrash = (em: EntityManager, userId: string) =>
-  em.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [
-    `drive-trash:${userId}`,
-  ]);
 
 const restoreResult = (
   type: MoveEntryType,
