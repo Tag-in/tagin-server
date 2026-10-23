@@ -127,6 +127,15 @@ describe('DriveDummySeeder', () => {
     expect(storage.put).not.toHaveBeenCalled();
   });
 
+  it('스토리지 업로드가 실패하면 파일과 단계를 포함해 오류를 던진다', async () => {
+    storage.put.mockRejectedValueOnce(new AggregateError([], ''));
+
+    await expect(seeder.seed(OWNER, root)).rejects.toThrow(
+      'a.txt 스토리지 업로드 실패 - AggregateError',
+    );
+    expect(sqlCalls(em, 'INSERT INTO drive_items')).toHaveLength(0);
+  });
+
   it('임베딩이 실패하면 DB에 아무것도 남기지 않고 오류를 던진다', async () => {
     embedding.embed.mockRejectedValueOnce(new Error('embedding API 401'));
 

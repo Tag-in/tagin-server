@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
+import { describeError } from '../../../common/utils/error-detail.util.js';
 import { resolveTestUserId } from '../../../common/utils/test-user.util.js';
 import { ObjectStorageService } from '../../../core/storage/object-storage.service.js';
 import { addItemsToFolders } from '../utils/centroid.util.js';
@@ -84,8 +85,8 @@ export class DriveDummySeeder implements OnApplicationBootstrap {
   onApplicationBootstrap(): void {
     const ownerId = resolveTestUserId();
     if (!ownerId || !this.config.get<boolean>('SEED_DUMMY_DRIVE')) return;
-    void this.seed(ownerId).catch((e: Error) =>
-      this.logger.error(`더미 파일 업로드 중단: ${e.message}`),
+    void this.seed(ownerId).catch((e: unknown) =>
+      this.logger.error(`더미 파일 업로드 중단: ${describeError(e)}`),
     );
   }
 
@@ -118,30 +119,43 @@ export class DriveDummySeeder implements OnApplicationBootstrap {
     this.logger.log(`더미 파일 ${pending.length}개 업로드를 시작합니다.`);
     const folderIds = new Map<string, string>();
     for (const file of pending) {
-      const buffer = await readFile(join(root, file.path));
-      const storageKey = prefix + file.path;
+      // 실패 시 어느 파일의 어느 단계(임베딩/스토리지/DB)에서 막혔는지 알 수 있게 한다.
+      let step = '파일 읽기';
+      try {
+        const buffer = await readFile(join(root, file.path));
+        const storageKey = prefix + file.path;
 
-      const title = file.name.replace(/\.[^.]+$/, '').replace(/[_\-.]+/g, ' ');
-      const text = buffer
-        .toString('utf8')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, MAX_TEXT_CHARS);
-      const embedding = normalize(
-        await this.embedding.embed(`${title}\n${text}`),
-      );
+        const title = file.name
+          .replace(/\.[^.]+$/, '')
+          .replace(/[_\-.]+/g, ' ');
+        const text = buffer
+          .toString('utf8')
+          .replace(/\s+/g, ' ')
+          .trim()
+          .slice(0, MAX_TEXT_CHARS);
+        step = '임베딩';
+        const embedding = normalize(
+          await this.embedding.embed(`${title}\n${text}`),
+        );
 
-      await this.storage.put(storageKey, buffer, 'text/plain');
-      const folderId = await this.ensureFolder(ownerId, file.dir, folderIds);
-      await this.insertItem(
-        ownerId,
-        folderId,
-        file,
-        buffer,
-        storageKey,
-        text,
-        embedding,
-      );
+        step = '스토리지 업로드';
+        await this.storage.put(storageKey, buffer, 'text/plain');
+        step = 'DB 저장';
+        const folderId = await this.ensureFolder(ownerId, file.dir, folderIds);
+        await this.insertItem(
+          ownerId,
+          folderId,
+          file,
+          buffer,
+          storageKey,
+          text,
+          embedding,
+        );
+      } catch (e) {
+        throw new Error(`${file.path} ${step} 실패 - ${describeError(e)}`, {
+          cause: e,
+        });
+      }
     }
     this.logger.log(`더미 파일 ${pending.length}개를 업로드했습니다.`);
   }
