@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { LoggerModule } from 'nestjs-pino';
 import { envValidationSchema } from './core/config/env.validation.js';
@@ -10,7 +11,6 @@ import { HealthModule } from './core/health/health.module.js';
 import { RedisModule } from './core/redis/redis.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { DriveModule } from './modules/drive/drive.module.js';
-import { FilesModule } from './modules/files/files.module.js';
 
 @Module({
   imports: [
@@ -34,10 +34,10 @@ import { FilesModule } from './modules/files/files.module.js';
       }),
     }),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     RedisModule,
     AuthModule,
-    FilesModule,
     DriveModule,
     HealthModule,
   ],

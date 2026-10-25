@@ -13,13 +13,16 @@ TAG→IN 서버 (NestJS)
 ```bash
 npm install
 cp .env.example .env      # 필요 시 값 수정
-npm run db:up             # PostgreSQL, Redis 실행 (healthy 상태까지 대기)
+npm run db:up             # PostgreSQL, Redis, MinIO 실행 (healthy 상태까지 대기)
 npm run start:dev
 ```
 
 - API: `http://localhost:3000/api`
 - 헬스체크: `GET /api/health` (DB, Redis 연결 확인)
 - Swagger UI: `http://localhost:3000/docs` / OpenAPI JSON: `http://localhost:3000/docs/json` (`SWAGGER_ENABLED=true`일 때만 노출)
+
+- MinIO(로컬 S3 호환 스토리지): API `http://localhost:9000`, 콘솔 `http://localhost:9001` (로그인은 `.env`의 `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`). 기동 시 `AWS_S3_BUCKET_NAME` 버킷을 자동으로 만든다. 드라이브 파일 업로드와 기동 시 더미 파일 업로드(`SEED_DUMMY_DRIVE`)가 사용하므로, 떠 있지 않으면 업로드가 `ECONNREFUSED`로 실패한다.
+- MinIO 공식 이미지는 더 이상 배포되지 않아 `docker-compose.yml`은 Bitnami 보관용 이미지(`bitnamilegacy/minio`)를 고정해 쓴다. 업데이트되지 않는 로컬 개발 전용이므로 운영에서는 AWS S3를 사용한다.
 
 인프라 종료는 `npm run db:down`, 데이터까지 삭제하려면 `docker compose down -v`.
 
@@ -47,6 +50,7 @@ src/
 ├── core/                      # 앱 전역 인프라. AppModule에서 한 번만 등록
 │   ├── config/                # 환경변수 검증 스키마 (Joi)
 │   ├── database/              # TypeORM 설정, CLI용 data-source, migrations, transformers, utils
+│   ├── storage/               # 오브젝트 스토리지(S3/MinIO) 클라이언트 (업로드·삭제)
 │   ├── redis/                 # 전역 Redis 클라이언트 (@Inject(REDIS_CLIENT))
 │   └── health/                # Terminus 헬스체크 (indicators/)
 ├── common/                    # 상태 없는 공용 코드 (어느 도메인에도 속하지 않음)
@@ -54,7 +58,7 @@ src/
 │   └── swagger/               # Swagger 설정, 문서화 공통 데코레이터/DTO
 └── modules/                   # 비즈니스 도메인
     ├── auth/                  # Google 로그인·가입(ID Token), Access JWT + Refresh Token(Redis)
-    ├── files/                 # 업로드 파일 메타데이터 (바이너리는 오브젝트 스토리지)
+    ├── drive/                 # 파일·링크·폴더(계층). 임베딩 기반 의미 검색·자동 분류(pgvector), 이동, 휴지통(삭제·복원·자동 영구 삭제), 다운로드(presigned URL·ZIP)
     └── users/                 # User·UserIdentity 엔티티, 사용자 계정 규칙
 ```
 
@@ -72,6 +76,8 @@ modules/<domain>/
 ├── utils/         # 도메인 순수 함수
 └── constants/     # 도메인 상수
 ```
+
+단위 테스트(`*.spec.ts`)는 기능 파일 옆에 두지 않고 각 계층 폴더의 `test/`에 둔다 (예: `services/test/auth.service.spec.ts`). e2e 테스트는 루트 `test/`에 있다.
 
 ## 규칙
 

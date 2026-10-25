@@ -8,48 +8,14 @@
  *
  * 흐름: 텍스트 추출 → 임베딩 → pgvector 최근접 폴더 검색(코사인 유사도 ≥ 임계값) → 폴더 결정 → 저장
  *
- * 필요 스키마는 DRIVE_SCHEMA_SQL 참고 (프로젝트 규칙상 마이그레이션으로 반영할 것).
+ * 스키마는 src/core/database/migrations(CreateDriveFolders, AddDriveFolderHierarchy)에 있다.
+ * Embedder 구현은 EmbeddingService(src/modules/drive/services), ObjectStorage 구현은
+ * ObjectStorageService(src/core/storage)를 쓴다.
  */
 import { createHash, randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import JSZip from 'jszip';
 import { PDFParse } from 'pdf-parse';
-
-// ───────────────────────── 스키마 ─────────────────────────
-
-/** EMBEDDING_DIMENSIONS(기본 1536)와 vector 차원이 반드시 같아야 한다. */
-export const DRIVE_SCHEMA_SQL = (dimensions = 1536) => `
-CREATE EXTENSION IF NOT EXISTS vector;
-
-CREATE TABLE IF NOT EXISTS drive_folders (
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  owner_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  name        varchar NOT NULL,
-  centroid    vector(${dimensions}) NOT NULL,
-  item_count  integer NOT NULL DEFAULT 0,
-  created_at  timestamptz NOT NULL DEFAULT now(),
-  updated_at  timestamptz NOT NULL DEFAULT now()
-);
-CREATE INDEX IF NOT EXISTS idx_drive_folders_owner ON drive_folders(owner_id);
-
-CREATE TABLE IF NOT EXISTS drive_items (
-  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  owner_id      uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  folder_id     uuid NOT NULL REFERENCES drive_folders(id) ON DELETE CASCADE,
-  kind          varchar NOT NULL,            -- FILE | LINK
-  name          varchar NOT NULL,
-  mime_type     varchar,
-  size_bytes    bigint,
-  storage_key   varchar UNIQUE,              -- LINK는 null
-  url           text,                        -- LINK만 사용
-  checksum_sha256 char(64),
-  summary       text,                        -- 임베딩에 사용한 텍스트 일부
-  embedding     vector(${dimensions}) NOT NULL,
-  created_at    timestamptz NOT NULL DEFAULT now()
-);
-CREATE INDEX IF NOT EXISTS idx_drive_items_folder ON drive_items(folder_id);
-`;
 
 // ───────────────────────── 타입 ─────────────────────────
 
@@ -409,70 +375,6 @@ function normalizeVector(v: number[]): number[] {
   return norm === 0 ? v : v.map((x) => x / norm);
 }
 
-// ───────────────────────── 기본 구현: 임베딩 ─────────────────────────
-
-/**
- * OpenAI 호환 /embeddings 엔드포인트용 임베더 (OpenAI, Azure, Ollama, vLLM 등).
- * EMBEDDING_API_KEY, EMBEDDING_BASE_URL(기본 https://api.openai.com/v1),
- * EMBEDDING_MODEL(기본 text-embedding-3-small), EMBEDDING_DIMENSIONS(기본 1536)
- */
-export class OpenAiCompatibleEmbedder implements Embedder {
-  constructor(
-    private readonly config = {
-      apiKey: process.env.EMBEDDING_API_KEY ?? '',
-      baseUrl: process.env.EMBEDDING_BASE_URL ?? 'https://api.openai.com/v1',
-      model: process.env.EMBEDDING_MODEL ?? 'text-embedding-3-small',
-      dimensions: Number(process.env.EMBEDDING_DIMENSIONS ?? 1536),
-    },
-  ) {}
-
-  async embed(text: string): Promise<number[]> {
-    const res = await fetch(`${this.config.baseUrl}/embeddings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: this.config.model,
-        input: text,
-        dimensions: this.config.dimensions,
-      }),
-      signal: AbortSignal.timeout(30_000),
-    });
-    if (!res.ok) throw new Error(`embedding API ${res.status}`);
-    const json = (await res.json()) as { data: { embedding: number[] }[] };
-    const vector = json.data[0]?.embedding;
-    if (!vector || vector.length !== this.config.dimensions) {
-      throw new Error('embedding 차원이 EMBEDDING_DIMENSIONS와 다릅니다.');
-    }
-    return vector;
-  }
-}
-
-// ───────────────────────── 기본 구현: 스토리지 (S3/MinIO) ─────────────────────────
-
-export class S3ObjectStorage implements ObjectStorage {
-  constructor(
-    private readonly client = new S3Client({
-      region: process.env.AWS_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
-      },
-      endpoint: process.env.AWS_S3_ENDPOINT,
-      forcePathStyle: true, // MinIO 필수
-    }),
-    private readonly bucket = process.env.AWS_S3_BUCKET_NAME ?? '',
-  ) {}
-
-  async put(key: string, body: Buffer, mimeType: string): Promise<void> {
-    await this.client.send(
-      new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: body, ContentType: mimeType }),
-    );
-  }
-}
-
 // ───────────────────────── 기본 구현: DB (TypeORM + pgvector) ─────────────────────────
 
 /** TypeORM DataSource와 호환되는 최소 인터페이스 (테스트에서 대체하기 쉽게 분리). */
@@ -504,7 +406,7 @@ class PgTx implements DriveTx {
   async findNearestFolder(ownerId: string, vector: number[]): Promise<FolderMatch | null> {
     const rows = await this.m.query(
       `SELECT id, name, 1 - (centroid <=> $2::vector) AS similarity
-         FROM drive_folders WHERE owner_id = $1
+         FROM drive_folders WHERE owner_id = $1 AND centroid IS NOT NULL AND deleted_at IS NULL
         ORDER BY centroid <=> $2::vector LIMIT 1`,
       [ownerId, toVectorLiteral(vector)],
     );
@@ -524,7 +426,7 @@ class PgTx implements DriveTx {
     // pgvector는 벡터×스칼라 연산이 없다. 코사인 거리는 크기와 무관하므로 합계 벡터를 그대로 대표값으로 쓴다.
     await this.m.query(
       `UPDATE drive_folders
-          SET centroid = centroid + $2::vector,
+          SET centroid = COALESCE(centroid + $2::vector, $2::vector),
               item_count = item_count + 1,
               updated_at = now()
         WHERE id = $1`,
@@ -548,7 +450,7 @@ class PgTx implements DriveTx {
 
   async folderNameExists(ownerId: string, name: string): Promise<boolean> {
     const rows = await this.m.query(
-      'SELECT 1 FROM drive_folders WHERE owner_id = $1 AND name = $2 LIMIT 1',
+      'SELECT 1 FROM drive_folders WHERE owner_id = $1 AND name = $2 AND deleted_at IS NULL LIMIT 1',
       [ownerId, name],
     );
     return rows.length > 0;

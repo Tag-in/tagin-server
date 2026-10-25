@@ -35,6 +35,27 @@ services:
       timeout: 3s
       retries: 10
 
+  # 로컬 S3 호환 스토리지. 앱의 AWS_S3_* 설정(.env)과 같은 값을 쓰며, 기동 시 버킷을 자동으로 만든다.
+  # MinIO 공식 이미지는 더 이상 배포되지 않아 Bitnami 보관용 이미지를 고정해 쓴다 (로컬 개발 전용).
+  minio:
+    image: bitnamilegacy/minio:2025.7.23-debian-12-r5
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      MINIO_DEFAULT_BUCKETS: ${AWS_S3_BUCKET_NAME:-tagin}
+    ports:
+      - '127.0.0.1:9000:9000'
+      - '127.0.0.1:9001:9001'
+    volumes:
+      - minio-data:/bitnami/minio/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
   postgres-data:
   redis-data:
+  minio-data:
